@@ -17,7 +17,7 @@
  * See the File README and COPYING for more detail about License
  *
 */
-
+ 
 #include "ofMain.h"
 #include "ofApp.h"
 
@@ -83,7 +83,7 @@ int main(int argc, char **argv){
   exit(1);
  } 
  /* Continue */
- ofSetLogLevel(OF_LOG_SILENT);
+ ofSetLogLevel(OF_LOG_VERBOSE);
  if(argc == 3) {
   w=atoi(argv[1]);
   h=atoi(argv[2]);

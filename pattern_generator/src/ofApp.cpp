@@ -67,8 +67,10 @@ void ofApp::update(){
    last_frame_time=0;
    std::vector<std::string> el;
    boost::split(el, str, boost::is_any_of("="));
-   if(el[0] == "DRAW")
+   if(el[0] == "DRAW") {
     draw_type=el[1];
+	ofxRPI4Window::colorspace_on=1; 
+   }
    if(el[0] == "TEXT")
     text_to_write=el[1];
    if(el[0] == "PATTERN_NAME")
