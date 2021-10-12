@@ -20,7 +20,7 @@
 
 #include "ofApp.h"
 
-
+ 
 
 /*
  ##########################################################
@@ -328,8 +328,9 @@ void ofApp::text() {
  #                         Image                          #
  ##########################################################
 */
+
 void ofApp::image() {
-	
+
  int scale_dim1 = ofGetWindowWidth()/arr_dim1[i][to_draw];
  int scale_dim2 = ofGetWindowHeight()/arr_dim2[i][to_draw];
  
@@ -340,6 +341,7 @@ void ofApp::image() {
  }
 
 
+if (ofxRPI4Window::isHDR) {
  float_img.clear();
 
 	float_img.load(arr_image[i][to_draw]);
@@ -354,8 +356,23 @@ void ofApp::image() {
 
     float_img.update();
     float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw]*scale_dim1,arr_dim2[i][to_draw]*scale_dim2); 	  
-	  
+} else {
+	 img.clear();
 
+	img.load(arr_image[i][to_draw]);
+   			    int width = img.getPixels().getWidth();
+    int height = img.getPixels().getHeight();
+    int channels = img.getPixels().getNumChannels();
+    
+    ofLogNotice("image specs") << "width " << width << " height " << height << " channels " << channels;
+	ofLogNotice("image specs2") << "x " << arr_posx[i][to_draw] << " y " << arr_posy[i][to_draw];
+	img.rotate90(arr_rotate[i][to_draw]);
+     ofSetColor(255,255,255,255);
+
+    img.update();
+    img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw]*scale_dim1,arr_dim2[i][to_draw]*scale_dim2); 	  
+
+}
 
 
 }
@@ -364,6 +381,7 @@ void image_local() {
  int w;
   int h;
   int num_channels;
+ //   auto window_type = std::make_shared<ofxRPI4Window>();	
 
  ofxTinyEXR exrIO;
  //float_image.clear();
