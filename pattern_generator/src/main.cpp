@@ -67,8 +67,10 @@ int main(int argc, char **argv){
     auto window = std::make_shared<ofxRPI4Window>(settings);
     auto hdr = std::make_shared<ofxTinyEXR>();
     auto app = std::make_shared<ofApp>();
+
     ofRunApp(window, app);
-	// image_local();
+
     ofRunMainLoop();
 
 } 
+ 

@@ -133,6 +133,7 @@ void ofApp::update(){
  ##########################################################
 */
 void ofApp::draw(){
+//	image_local();
  if(entered == 0)
   return;
  for(to_draw=0;to_draw<n_draw[i];to_draw++) {
@@ -356,6 +357,7 @@ if (ofxRPI4Window::isHDR) {
 
     float_img.update();
     float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw]*scale_dim1,arr_dim2[i][to_draw]*scale_dim2); 	  
+
 } else {
 	 img.clear();
 
@@ -374,14 +376,14 @@ if (ofxRPI4Window::isHDR) {
 
 }
 
-
+ 
 }
-void image_local() {
-//	ofFloatImage float_image;
+void ofApp::image_local() {
+
  int w;
   int h;
   int num_channels;
- //   auto window_type = std::make_shared<ofxRPI4Window>();	
+
 
  ofxTinyEXR exrIO;
  //float_image.clear();
@@ -417,29 +419,7 @@ std::cout << "The size is " << n << '\n';
 ofTexture tex;
  tex.isAllocated();//
  tex.loadData(pix);
-// for (size_t i = 0; i < n; i++) {cout << hex << setfill('0');  cout << setw(2) << reinterpret_cast<int*>(&pix.getData()[i]);}
-//float_image.allocate(800,800,OF_IMAGE_COLOR);
-//ofFbo floatFbo;
-//floatFbo.allocate(800, 800, GL_RGB, 0);
-//floatFbo.allocate(settings);
-   //     floatFbo.createAndAttachTexture(GL_RGB, 1);
 
-     // floatFbo.createAndAttachRenderbuffer(GL_RGB32F, 3);
-      //  floatFbo.checkStatus();
-  //    float_image.rotate90(arr_rotate[i][to_draw]);
- // ofFloatPixels floatpix;
-//  floatpix.allocate( 800, 800, OF_IMAGE_COLOR );   
-//  floatFbo.readToPixels(floatpix);
-
- //     ofSetColor(255,255,255);
-//float_image.getPixels().setFromPixels(floatpix.getData(), 800, 800, OF_IMAGE_COLOR);
- //     printf("frameBufferData:\n");
-  //  for (int i = 0; i < 200; ++i)
-  //  {
-  //      printf("%i ", floatpix[i]);
-  //  }
-  //  printf("\n");
-    //  tex.update();
 	   ofSetColor(255,255,255);
       tex.draw(x,y,w,h); 	  
 	  

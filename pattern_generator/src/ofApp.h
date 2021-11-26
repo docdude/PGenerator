@@ -103,9 +103,9 @@ class ofApp : public ofBaseApp{
   void text();
   void image();
   void set_values();
-
+	void image_local();
   void log(std::string);
  //
 };
- void image_local();
- 
+ //void image_local();
+  
