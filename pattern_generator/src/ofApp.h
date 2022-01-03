@@ -37,6 +37,14 @@ class ofApp : public ofBaseApp{
   ofTrueTypeFont myfont;
   ofFloatImage float_img;
   ofImage img;
+ofFbo fbo8;
+ofFbo fbo10;
+ofFbo fbo12_16; 
+ofShortPixels short_pixels;
+ofFloatPixels float_pixels;
+ofPixels pixels;
+  ofShader shader;
+    ofShader shader_print;
   string image_save;
   string movie_name;
   int sleep_time;
@@ -76,6 +84,7 @@ class ofApp : public ofBaseApp{
   int arr_dim2[2048][2048];
   int arr_posx[2048][2048];
   int arr_posy[2048][2048];
+  int arr_bits[2048][2048];
   unsigned long long arr_frame_time[2048];
   unsigned long long arr_frame_duration[2048];
   int dim1;
@@ -90,6 +99,7 @@ class ofApp : public ofBaseApp{
   int greenb;
   int blueb;
   int duration;
+  int bits;
   int frame;
   int n_draw[2048];
   int frame_to_draw;

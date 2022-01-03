@@ -19,9 +19,7 @@
 */
 
 #include "ofApp.h"
-
- 
-
+#include <GLES3/gl3.h>
 /*
  ##########################################################
  #                           Setup                        #
@@ -35,6 +33,11 @@ void ofApp::setup(){
  std::ofstream pidfile (pid_file);
  pidfile << getpid();
  pidfile.close();
+//shader.load("color");
+// if (ofxRPI4Window::isDolby)	
+//	shader.load("dovi");
+ //shader.load("dovi_310");
+ // shader_print.load("glsl_print");
 }
 
 /*
@@ -89,6 +92,9 @@ void ofApp::update(){
     green=boost::lexical_cast<int>(rgb[1]);
     blue=boost::lexical_cast<int>(rgb[2]);
    }
+   if(el[0] == "BITS")
+    bits=boost::lexical_cast<int>(el[1]);
+  ofxRPI4Window::bit_depth = bits;
    if(el[0] == "POSITION") {
     boost::split(positions, el[1], boost::is_any_of(","));
     position_x=boost::lexical_cast<int>(positions[0]);
@@ -133,7 +139,7 @@ void ofApp::update(){
  ##########################################################
 */
 void ofApp::draw(){
-//	image_local();
+
  if(entered == 0)
   return;
  for(to_draw=0;to_draw<n_draw[i];to_draw++) {
@@ -147,7 +153,7 @@ void ofApp::draw(){
    save_images=0;
    unlink(return_file_char);
    return;
-  }
+  } 
   char buffer[255];
   sprintf(buffer,"Doing the frame %d and the Draw %d",i,to_draw);
   ofApp::log(buffer);
@@ -163,7 +169,20 @@ void ofApp::draw(){
   ofApp::log(buffer);
   sprintf(buffer,"Position: %d %d",arr_posx[i][to_draw],arr_posy[i][to_draw]);
   ofApp::log(buffer);
-  ofSetColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
+  sprintf(buffer,"Bits: %d",arr_bits[i][to_draw]);
+  ofApp::log(buffer);
+
+  if (ofxRPI4Window::isHDR && arr_bits[i][to_draw] == 10) {  
+	ofSet10bitColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
+  } else if (ofxRPI4Window::isHDR && arr_bits[i][to_draw] == 12)  {	
+	ofSetFloatColor((float)arr_red[i][to_draw],(float)arr_green[i][to_draw],(float)arr_blue[i][to_draw]);
+  } else if (ofxRPI4Window::isHDR && arr_bits[i][to_draw] == 14)  {	
+	ofSetFloatColor((float)arr_red[i][to_draw],(float)arr_green[i][to_draw],(float)arr_blue[i][to_draw]);
+  } else if (ofxRPI4Window::isHDR && arr_bits[i][to_draw] == 16)  {	
+	ofSetFloatColor((float)arr_red[i][to_draw],(float)arr_green[i][to_draw],(float)arr_blue[i][to_draw]);
+  } else {
+	ofSetColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
+  }
   if(arr_redbg[i][to_draw] != -1)
    ofBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
   //else
@@ -264,6 +283,7 @@ void ofApp::set_values () {
  arr_posx[frame][n_draw[frame]]=position_x;
  arr_posy[frame][n_draw[frame]]=position_y;
  arr_resolution[frame][n_draw[frame]]=resolution;
+ arr_bits[frame][n_draw[frame]]=bits;
  arr_image[frame][n_draw[frame]]=img_file;
  arr_rotate[frame][n_draw[frame]]=img_rotate;
 }
@@ -278,7 +298,117 @@ void ofApp::rectangle () {
   arr_posx[i][to_draw]=(ofGetWindowWidth()-arr_dim1[i][to_draw])/2;
   arr_posy[i][to_draw]=(ofGetWindowHeight()-arr_dim2[i][to_draw])/2;
  }
+// 	ofLogNotice("rect specs1") << "width " << arr_dim1[i][to_draw] << " height " << arr_dim2[i][to_draw];
+//	ofLogNotice("rect specs2") << "x " << arr_posx[i][to_draw] << " y " << arr_posy[i][to_draw];
+int w = arr_dim1[i][to_draw];
+int h = arr_dim2[i][to_draw];
+
+  if (ofxRPI4Window::isHDR && arr_bits[i][to_draw] >= 10) { 
+#if 0
+
+if (arr_bits[i][to_draw] == 10) {
+	fbo10.allocate(w, h, GL_RGB10_A2);
+	fbo10.begin();
+	ofClear10bit(0,0,0,0);
+	fbo10.end();
+	fbo10.begin();
+} else if (arr_bits[i][to_draw] > 10 && arr_bits[i][to_draw] <=16) {
+	fbo12_16.allocate(w, h, GL_RGBA16F);
+	fbo12_16.begin();
+	ofClearFloat(0, 0, 0, 0);
+	fbo12_16.end();
+	fbo12_16.begin();
+}
+
+
+#endif 
  ofDrawRectangle(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
+
+#if 0
+if (arr_bits[i][to_draw] == 10) {
+	fbo10.end();
+	ofSet10bitColor(1023,1023,1023,1023);
+	fbo10.draw(arr_posx[i][to_draw],arr_posy[i][to_draw]);
+	}
+if (arr_bits[i][to_draw] > 10 && arr_bits[i][to_draw] <=16) {
+	fbo12_16.end();
+	ofSetFloatColor(65535,65535,65535,65535);
+	fbo12_16.draw(arr_posx[i][to_draw],arr_posy[i][to_draw]);
+}
+
+
+short_pixels.allocate(w, h, OF_PIXELS_RGBA);
+//float_pixels.allocate(w, h, OF_PIXELS_RGBA);
+if (arr_bits[i][to_draw] == 10)
+	fbo10.readToPixels(short_pixels);
+if (arr_bits[i][to_draw] > 10 && arr_bits[i][to_draw] <=16)
+	fbo12_16.readToPixels(short_pixels);
+
+//fbo.readToPixels(float_pixels);
+ 
+
+int i=0, j=0; 
+for(auto line = short_pixels.getLines().begin(); line != short_pixels.getLines().end(); ++line){
+	
+    for(auto pixel: line.getPixels()){
+		ofShortColor color = pixel.getColor();
+	if(i == j) {
+        cout <<  "line: " << line.getLineNum() << " color: " <<  color << endl;
+		j=0;
+	}
+	j++;
+    }
+i++;
+}
+#endif
+#if 0
+int i=0, j=0; 
+for(auto line = float_pixels.getLines().begin(); line != float_pixels.getLines().end(); ++line){
+	
+    for(auto pixel: line.getPixels()){
+		ofFloatColor color = pixel.getColor();
+	if(i == j) {
+        cout <<  "line: " << line.getLineNum() << " color: " <<  pixel.getColor() << endl;
+		j=0;
+	}
+	j++;
+    }
+i++;
+}
+#endif
+} else {
+#if 0
+fbo8.allocate(w, h, GL_RGBA8);
+fbo8.begin();
+ofClear(0, 0, 0, 0);
+fbo8.end();
+fbo8.begin();
+#endif
+	 ofDrawRectangle(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
+#if 0
+fbo8.end();
+ofSetColor(255,255,255,255);
+fbo8.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
+pixels.allocate(w, h, OF_PIXELS_RGBA);
+
+fbo8.readToPixels(pixels);
+#if 1
+int i=0, j=0; 
+for(auto line = pixels.getLines().begin(); line != pixels.getLines().end(); ++line){
+	
+    for(auto pixel: line.getPixels()){
+	//	ofShortColor color = pixel.getColor();
+	if(i == j) {
+        cout <<  "line: " << line.getLineNum() << " color: " << pixel.getColor() << endl;
+		j=0;
+	}
+	j++;
+    }
+i++;
+}
+#endif 
+#endif
+}
 }
 
 /*
@@ -332,21 +462,24 @@ void ofApp::text() {
 
 void ofApp::image() {
 
- int scale_dim1 = ofGetWindowWidth()/arr_dim1[i][to_draw];
- int scale_dim2 = ofGetWindowHeight()/arr_dim2[i][to_draw];
+ double scale_dim1 = (double)ofGetWindowWidth()/(double)arr_dim1[i][to_draw];
+ double scale_dim2 = (double)ofGetWindowHeight()/(double)arr_dim2[i][to_draw];
  
+// if(arr_posx[i][to_draw] == -1) {
+ // arr_posx[i][to_draw]=(ofGetWindowWidth()-(arr_dim1[i][to_draw]*scale_dim1))/2;
+ // arr_posy[i][to_draw]=(ofGetWindowHeight()-(arr_dim2[i][to_draw]*scale_dim2))/2;
+
+// }
  if(arr_posx[i][to_draw] == -1) {
-  arr_posx[i][to_draw]=(ofGetWindowWidth()-(arr_dim1[i][to_draw]*scale_dim1))/2;
-  arr_posy[i][to_draw]=(ofGetWindowHeight()-(arr_dim2[i][to_draw]*scale_dim2))/2;
-
+  arr_posx[i][to_draw]=(ofGetWindowWidth()-arr_dim1[i][to_draw])/2;
+  arr_posy[i][to_draw]=(ofGetWindowHeight()-arr_dim2[i][to_draw])/2;
  }
-
 
 if (ofxRPI4Window::isHDR) {
  float_img.clear();
 
 	float_img.load(arr_image[i][to_draw]);
-   			    int width = float_img.getPixels().getWidth();
+   	int width = float_img.getPixels().getWidth();
     int height = float_img.getPixels().getHeight();
     int channels = float_img.getPixels().getNumChannels();
     
@@ -354,13 +487,23 @@ if (ofxRPI4Window::isHDR) {
 	ofLogNotice("image specs2") << "x " << arr_posx[i][to_draw] << " y " << arr_posy[i][to_draw];
 	float_img.rotate90(arr_rotate[i][to_draw]);
      ofSetColor(255,255,255,255);
+	float ratio = float_img.getWidth()/float_img.getHeight();
+	ofLogNotice("scaled image specs") << "width " << ofGetWidth() << " height " << (ofGetWidth()/ratio) << " channels " << channels;
 
     float_img.update();
-    float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw]*scale_dim1,arr_dim2[i][to_draw]*scale_dim2); 	  
+
+//	if (ofxRPI4Window::isDolby) 
+//		shader.begin(); //set Dolby Vision Colorspace IPTPQc2
+
+//    float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw]*scale_dim1,arr_dim2[i][to_draw]*scale_dim2); 	  
+//	float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],ofGetWidth(),ofGetWidth()/ratio);
+  float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
+//	if (ofxRPI4Window::isDolby)	
+//		shader.end();  //unset Dolby Vision Colorspace IPTPQc2
 
 } else {
 	 img.clear();
-
+#if 1
 	img.load(arr_image[i][to_draw]);
    			    int width = img.getPixels().getWidth();
     int height = img.getPixels().getHeight();
@@ -372,8 +515,12 @@ if (ofxRPI4Window::isHDR) {
      ofSetColor(255,255,255,255);
 
     img.update();
-    img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw]*scale_dim1,arr_dim2[i][to_draw]*scale_dim2); 	  
+#endif
+//shader.begin();
+  img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
 
+  //  img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw]*scale_dim1,arr_dim2[i][to_draw]*scale_dim2); 	  
+//shader.end();
 }
 
  
@@ -421,11 +568,88 @@ ofTexture tex;
  tex.loadData(pix);
 
 	   ofSetColor(255,255,255);
+    shader.setUniformTexture("_src_tex_0_0", tex, 1);
       tex.draw(x,y,w,h); 	  
-	  
+
 	  
 }
+#if 0
+int imageWidth = myImage.getWidth();
+int imageHeight = myImage.getHeight();
+unsigned char* rgbPixelData = myImage.getPixels().getData(); 
 
+// Allocate memory for storing a grayscale version.
+// Since there's only 1 channel of data, it's just w*h. 
+int nBytes = imageWidth * imageHeight; 
+unsigned char* PixelData = new unsigned char [nBytes];
+
+// For every pixel in the grayscale destination image, 
+for(int index=0; index<nBytes; index++){
+
+	// Compute the index of the corresponding pixel in the color image,
+	// remembering that it has 3 times as much data as the gray one. 
+	int indexColor = (index * 3); 
+
+	// Fetch the red, green and blue bytes for that color pixel. 
+	unsigned char R = rgbPixelData[indexColor  ]; 
+	unsigned char G = rgbPixelData[indexColor+1]; 
+	unsigned char B = rgbPixelData[indexColor+2]; 
+	
+	pl_opengl_params(
+        .allow_software = true,
+        .debug = DEBUG,
+        .make_current = make_current,
+        .release_current = release_current,
+        .priv = p->win,
+    );
+    params = PL_DEF(params, &pl_opengl_default_params);
+
+
+	struct pl_opengl *pl_gl = pl_zalloc_obj(NULL, pl_gl, struct priv);
+
+
+    pl_gl->gpu = pl_gpu_create_gl(log, pl_gl, params);
+    if (!pl_gl->gpu)
+        goto error;
+struct ui *ui;
+   ui = ui_create(pl_gl->gpu);
+
+    gl_release_current(pl_gl);
+
+	// Compute and assign the luminance (here, as an average of R,G,B).
+	// Alternatively, you could use colorimetric coefficients.  
+//	unsigned char Y = (R+G+B)/3; 
+	struct pl_color_repr repr;
+	repr->sys = PL_COLOR_SYSTEM_DOVI_IPT;
+	repr->levels = PL_COLOR_LEVELS_FULL;
+	repr->alpha = PL_ALPHA_UNKNOWN ;
+	repr->bits.sample_depth = 30;
+	repr->bits.color_depth = 12;
+	repr->bits.bit_shift = 0;
+        pl_shader sh = pl_dispatch_begin(ui->dp);
+        pl_shader_custom(sh, &(struct pl_custom_shader) {
+            .description = "nuklear UI",
+            .body = (ui->gpu->glsl.version >= 130) ?
+                    "color = texture(ui_tex, coord).r * vcolor;" :
+                    "color = texture2D(ui_tex, coord).r * vcolor;",
+            .output = PL_SHADER_SIG_COLOR,
+            .num_descriptors = 1,
+            .descriptors = &(struct pl_shader_desc) {
+                .desc = {
+                    .name = "ui_tex",
+                    .type = PL_DESC_SAMPLED_TEX,
+                },
+                .binding = {
+                    .object = cmd->texture.ptr,
+                    .sample_mode = PL_TEX_SAMPLE_NEAREST, 
+                },
+            },
+        });
+	pl_shader_encode_color(sh, repr);
+	PixelData[index] = Y;
+}
+
+#endif
 /*
  ##########################################################
  #                          Log                           #

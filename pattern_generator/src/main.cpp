@@ -17,9 +17,44 @@
  * See the File README and COPYING for more detail about License
  *
 */
- 
+
 #include "ofMain.h"
 #include "ofApp.h"
+
+int usage(const char* name)
+{
+	printf("%s  \n", name);
+	printf("      %s <output format> <rgb quant range> <isHDR> <isDolby> <is_std_Dolby> <Max Fall> <Max Cll> <Max luma> <Min luma> <max bpc>\n", name);
+	printf("\n");
+	printf("        HDR metadata is in NITS\n");
+	printf("\n");
+	printf("        Output format values:\n");
+	printf("\n");
+	printf("	  RGB444   = 0\n");
+	printf("	  YCrCb444 = 1\n");
+	printf("	  YCrCb422 = 2\n");
+	printf("	  YCrCb420 = 3\n");
+	printf("\n");
+	printf("        RGB Quant Range values:\n");
+	printf("\n");
+	printf("	  Default          = 0\n");
+	printf("	  Limited [16-235] = 1\n");
+	printf("	  Full [0-255]     = 2\n");
+	printf("	  Reserved         = 3\n");
+	printf("\n");
+	printf("        isHDR = 1 is on, isHDR = 0 is off \n");
+	printf("        isDolby = 1 is on, isDolby = 0 is off (**both isHDR and isDolby must be set to 1 for Dolby**) \n");
+	printf("        is_std_Dolby = 1 is on, is_std_Dolby = 0 is off (**both isHDR and isDolby must be set to 1 for is_std_Dolby**) \n");
+	printf("        isHDR = 0, isDolby = 0 is SDR \n");
+	printf("\n");
+	printf("      Max bpc range 8 - 12\n");
+	printf("\n");
+	printf("Example:\n");
+	printf("  %s 0 2 1 1 0 300 4000 10000 1 10", name);
+	printf(" ==>  Sets PGenerator to RGB444, Full range[0-255], HDR, LLDV, 300 MaxFall, 4000 MaxCll, 10000 max lum, 1 min lum, 10 bit\n");
+	return 0;
+}
+ 
 
 int main(int argc, char **argv){
  int w=4096;
@@ -51,25 +86,48 @@ int main(int argc, char **argv){
  } 
  /* Continue */
  ofSetLogLevel(OF_LOG_VERBOSE);
+ if(argc < 2)
+	 return usage(argv[0]);
+ if(argc > 1) {
+ // w=atoi(argv[1]);
+ // h=atoi(argv[2]);
+ ofxRPI4Window::avi_info.output_format=atoi(argv[1]);
+  ofxRPI4Window::avi_info.rgb_quant_range=atoi(argv[2]);
+ ofxRPI4Window::isHDR=atoi(argv[3]);
+  ofxRPI4Window::isDolby=atoi(argv[4]);
+   ofxRPI4Window::is_std_Dolby=atoi(argv[5]);
+  ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.max_fall=atof(argv[6]);
+   ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.max_cll=atof(argv[7]);
+     ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.max_display_mastering_luminance=atof(argv[8]);
+   ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.min_display_mastering_luminance=atof(argv[9]);
+    ofxRPI4Window::avi_info.max_bpc=atoi(argv[10]);
+	ofxRPI4Window::mode_idx=atoi(argv[11]);
+ } 
 
- if(argc == 3) {
-  w=atoi(argv[1]);
-  h=atoi(argv[2]);
- }
 #ifdef USE_X
  ofSetupOpenGL(w,h, OF_FULLSCREEN);
  ofRunApp( new ofApp());
 #endif
     ofGLESWindowSettings settings;
-    settings.setSize(w, h);
-    settings.setGLESVersion(3);
-
+	settings.glesVersion = 3;
+ofApp *cs_data;
+ cs_data = new ofApp();
+ cs_data->update();
+ //   settings.setGLESVersion(3);
     auto window = std::make_shared<ofxRPI4Window>(settings);
     auto hdr = std::make_shared<ofxTinyEXR>();
     auto app = std::make_shared<ofApp>();
+//	app->update();
+delete cs_data;
 
+//	ofCreateWindow(settings);
     ofRunApp(window, app);
 
+	
+	// this kicks off the running of my app
+	// can be OF_WINDOW or OF_FULLSCREEN
+	// pass in width and height too:
+	//ofRunApp(new ofApp());
     ofRunMainLoop();
 
 } 
