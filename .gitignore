@@ -1,2 +1,4 @@
+pattern_generator/bin/*
+pattern_generator/obj/*
 pattern_generator/bin
 pattern_generator/obj
