@@ -24,7 +24,7 @@
 int usage(const char* name)
 {
 	printf("%s  \n", name);
-	printf("      %s <output format> <rgb quant range> <isHDR> <isDolby> <is_std_Dolby> <hdr_primaries> <Max Fall> <Max Cll> <Max luma> <Min luma> <max bpc> <mode_idx>\n", name);
+	printf("      %s <output format> <rgb quant range> <isHDR> <isDolby> <is_std_Dolby> <eotf> <hdr_primaries> <Max Fall> <Max Cll> <Max luma> <Min luma> <max bpc> <mode_idx>\n", name);
 	printf("\n");
 	printf("        HDR metadata is in NITS\n");
 	printf("\n");
@@ -46,6 +46,14 @@ int usage(const char* name)
 	printf("        isDolby = 1 is on, isDolby = 0 is off (**both isHDR and isDolby must be set to 1 for Dolby**) \n");
 	printf("        is_std_Dolby = 1 is on, is_std_Dolby = 0 is off (**both isHDR and isDolby must be set to 1 for is_std_Dolby**) \n");
 	printf("        isHDR = 0, isDolby = 0 is SDR \n");
+	printf("\n");
+	printf("        EOTF \n");
+	printf("	  Traditional Gamma-SDR Luminance Range  = 0\n");
+	printf("	  raditional Gamma-HDR Luminance Range   = 1\n");
+	printf("	  SMPTE ST 2084    						 = 2\n");
+	printf("	  Hybrid Log-Gamma (HLG)   		 		 = 3\n");
+	printf("	  Reserved for future use				 = 4\n");
+	printf("	  Reserved for future use				 = 5\n");
 	printf("\n");
 	printf("        hdr_primaries \n");
 	printf("	  Display Gamut Rec709        		 = 0\n");
@@ -105,13 +113,14 @@ int main(int argc, char **argv){
 	ofxRPI4Window::isHDR=atoi(argv[3]);
 	ofxRPI4Window::isDolby=atoi(argv[4]);
 	ofxRPI4Window::is_std_Dolby=atoi(argv[5]);
-	ofxRPI4Window::hdr_primaries=atoi(argv[6]);
-	ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.max_fall=atof(argv[7]);
-	ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.max_cll=atof(argv[8]);
-	ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.max_display_mastering_luminance=atof(argv[9]);
-	ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.min_display_mastering_luminance=atof(argv[10]);
-    ofxRPI4Window::avi_info.max_bpc=atoi(argv[11]);
-	ofxRPI4Window::mode_idx=atoi(argv[12]);
+	ofxRPI4Window::eotf=(static_cast<hdmi_eotf>(atoi(argv[6])));
+	ofxRPI4Window::hdr_primaries=atoi(argv[7]);
+	ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.max_fall=atof(argv[8]);
+	ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.max_cll=atof(argv[9]);
+	ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.max_display_mastering_luminance=atof(argv[10]);
+	ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.min_display_mastering_luminance=atof(argv[11]);
+    ofxRPI4Window::avi_info.max_bpc=atoi(argv[12]);
+	ofxRPI4Window::mode_idx=atoi(argv[13]);
  } 
 
 #ifdef USE_X

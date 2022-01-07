@@ -475,7 +475,7 @@ void ofApp::image() {
   arr_posy[i][to_draw]=(ofGetWindowHeight()-arr_dim2[i][to_draw])/2;
  }
 
-if (ofxRPI4Window::isHDR) {
+if (ofxRPI4Window::isHDR && ofxRPI4Window::isDolby && !ofxRPI4Window::is_std_Dolby) {
  float_img.clear();
 
 	float_img.load(arr_image[i][to_draw]);
@@ -495,7 +495,7 @@ if (ofxRPI4Window::isHDR) {
 //	if (ofxRPI4Window::isDolby) 
 //		shader.begin(); //set Dolby Vision Colorspace IPTPQc2
 
-//    float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw]*scale_dim1,arr_dim2[i][to_draw]*scale_dim2); 	  
+ //   float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw]*scale_dim1,arr_dim2[i][to_draw]*scale_dim2); 	  
 //	float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],ofGetWidth(),ofGetWidth()/ratio);
   float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
 //	if (ofxRPI4Window::isDolby)	
@@ -508,7 +508,7 @@ if (ofxRPI4Window::isHDR) {
    			    int width = img.getPixels().getWidth();
     int height = img.getPixels().getHeight();
     int channels = img.getPixels().getNumChannels();
-    
+   
     ofLogNotice("image specs") << "width " << width << " height " << height << " channels " << channels;
 	ofLogNotice("image specs2") << "x " << arr_posx[i][to_draw] << " y " << arr_posy[i][to_draw];
 	img.rotate90(arr_rotate[i][to_draw]);
