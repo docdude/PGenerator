@@ -75,8 +75,10 @@ void ofApp::update(){
     p_name=el[1];
    if(el[0] == "MOVIE_NAME")
     m_name=el[1];
-   if(el[0] == "IMAGE")
+   if(el[0] == "IMAGE") {
     img_file=el[1];
+	ofxRPI4Window::colorspace_on=0;
+   } 
    if(el[0] == "ROTATE")
     img_rotate=boost::lexical_cast<int>(el[1]);
    if(el[0] == "DIM") {
@@ -92,9 +94,11 @@ void ofApp::update(){
     green=boost::lexical_cast<int>(rgb[1]);
     blue=boost::lexical_cast<int>(rgb[2]);
    }
-   if(el[0] == "BITS")
+   if(el[0] == "BITS") {
     bits=boost::lexical_cast<int>(el[1]);
-  ofxRPI4Window::bit_depth = bits;
+	ofxRPI4Window::bit_depth = bits;
+	ofxRPI4Window::colorspace_on=1;
+   }
    if(el[0] == "POSITION") {
     boost::split(positions, el[1], boost::is_any_of(","));
     position_x=boost::lexical_cast<int>(positions[0]);
@@ -171,7 +175,7 @@ void ofApp::draw(){
   ofApp::log(buffer);
   sprintf(buffer,"Bits: %d",arr_bits[i][to_draw]);
   ofApp::log(buffer);
-
+#if 1
   if (ofxRPI4Window::isHDR && arr_bits[i][to_draw] == 10) {  
 	ofSet10bitColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
   } else if (ofxRPI4Window::isHDR && arr_bits[i][to_draw] == 12)  {	
@@ -181,8 +185,14 @@ void ofApp::draw(){
   } else if (ofxRPI4Window::isHDR && arr_bits[i][to_draw] == 16)  {	
 	ofSetFloatColor((float)arr_red[i][to_draw],(float)arr_green[i][to_draw],(float)arr_blue[i][to_draw]);
   } else {
-	ofSetColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
+	  if (arr_bits[i][to_draw] == 10) {  
+	     ofSet10bitColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
+	  } else {
+	     ofSetColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
+	  }
   }
+#endif
+
   if(arr_redbg[i][to_draw] != -1)
    ofBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
   //else
@@ -303,7 +313,7 @@ void ofApp::rectangle () {
 int w = arr_dim1[i][to_draw];
 int h = arr_dim2[i][to_draw];
 
-  if (ofxRPI4Window::isHDR && arr_bits[i][to_draw] >= 10) { 
+  if ((ofxRPI4Window::isHDR || ofxRPI4Window::isDolby) && arr_bits[i][to_draw] >= 10) { 
 #if 0
 
 if (arr_bits[i][to_draw] == 10) {
@@ -384,7 +394,9 @@ ofClear(0, 0, 0, 0);
 fbo8.end();
 fbo8.begin();
 #endif
+
 	 ofDrawRectangle(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
+
 #if 0
 fbo8.end();
 ofSetColor(255,255,255,255);
@@ -392,21 +404,21 @@ fbo8.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim
 pixels.allocate(w, h, OF_PIXELS_RGBA);
 
 fbo8.readToPixels(pixels);
-#if 1
-int i=0, j=0; 
-for(auto line = pixels.getLines().begin(); line != pixels.getLines().end(); ++line){
+
+	int i=0, j=0; 
+	for(auto line = pixels.getLines().begin(); line != pixels.getLines().end(); ++line){
 	
-    for(auto pixel: line.getPixels()){
-	//	ofShortColor color = pixel.getColor();
-	if(i == j) {
-        cout <<  "line: " << line.getLineNum() << " color: " << pixel.getColor() << endl;
-		j=0;
+		for(auto pixel: line.getPixels()){
+		//	ofShortColor color = pixel.getColor();
+		if(i == j) {
+			cout <<  "line: " << line.getLineNum() << " color: " << pixel.getColor() << endl;
+			j=0;
+		}
+		j++;
+		}
+		i++;
 	}
-	j++;
-    }
-i++;
-}
-#endif 
+
 #endif
 }
 }
@@ -475,8 +487,8 @@ void ofApp::image() {
   arr_posy[i][to_draw]=(ofGetWindowHeight()-arr_dim2[i][to_draw])/2;
  }
 
-if (ofxRPI4Window::isHDR && ofxRPI4Window::isDolby && !ofxRPI4Window::is_std_Dolby) {
- float_img.clear();
+if ((ofxRPI4Window::isHDR || ofxRPI4Window::isDolby) && !ofxRPI4Window::is_std_Dolby) {
+	float_img.clear();
 
 	float_img.load(arr_image[i][to_draw]);
    	int width = float_img.getPixels().getWidth();
@@ -505,19 +517,19 @@ if (ofxRPI4Window::isHDR && ofxRPI4Window::isDolby && !ofxRPI4Window::is_std_Dol
 	 img.clear();
 #if 1
 	img.load(arr_image[i][to_draw]);
-   			    int width = img.getPixels().getWidth();
+    int width = img.getPixels().getWidth();
     int height = img.getPixels().getHeight();
     int channels = img.getPixels().getNumChannels();
    
     ofLogNotice("image specs") << "width " << width << " height " << height << " channels " << channels;
 	ofLogNotice("image specs2") << "x " << arr_posx[i][to_draw] << " y " << arr_posy[i][to_draw];
 	img.rotate90(arr_rotate[i][to_draw]);
-     ofSetColor(255,255,255,255);
+    ofSetColor(255,255,255,255);
 
     img.update();
 #endif
 //shader.begin();
-  img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
+	img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
 
   //  img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw]*scale_dim1,arr_dim2[i][to_draw]*scale_dim2); 	  
 //shader.end();

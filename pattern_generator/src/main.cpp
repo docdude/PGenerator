@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 Biasiotto Riccardo
+ * Copyright (c) 2017-2021 Biasiotto Riccardo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,61 +21,42 @@
 #include "ofMain.h"
 #include "ofApp.h"
 
-int usage(const char* name)
-{
-	printf("%s  \n", name);
-	printf("      %s <output format> <rgb quant range> <isHDR> <isDolby> <is_std_Dolby> <eotf> <hdr_primaries> <Max Fall> <Max Cll> <Max luma> <Min luma> <max bpc> <mode_idx>\n", name);
-	printf("\n");
-	printf("        HDR metadata is in NITS\n");
-	printf("\n");
-	printf("        Output format values:\n");
-	printf("\n");
-	printf("	  RGB444   = 0\n");
-	printf("	  YCrCb444 = 1\n");
-	printf("	  YCrCb422 = 2\n");
-	printf("	  YCrCb420 = 3\n");
-	printf("\n");
-	printf("        RGB Quant Range values:\n");
-	printf("\n");
-	printf("	  Default          = 0\n");
-	printf("	  Limited [16-235] = 1\n");
-	printf("	  Full [0-255]     = 2\n");
-	printf("	  Reserved         = 3\n");
-	printf("\n");
-	printf("        isHDR = 1 is on, isHDR = 0 is off \n");
-	printf("        isDolby = 1 is on, isDolby = 0 is off (**both isHDR and isDolby must be set to 1 for Dolby**) \n");
-	printf("        is_std_Dolby = 1 is on, is_std_Dolby = 0 is off (**both isHDR and isDolby must be set to 1 for is_std_Dolby**) \n");
-	printf("        isHDR = 0, isDolby = 0 is SDR \n");
-	printf("\n");
-	printf("        EOTF \n");
-	printf("	  Traditional Gamma-SDR Luminance Range  = 0\n");
-	printf("	  raditional Gamma-HDR Luminance Range   = 1\n");
-	printf("	  SMPTE ST 2084    						 = 2\n");
-	printf("	  Hybrid Log-Gamma (HLG)   		 		 = 3\n");
-	printf("	  Reserved for future use				 = 4\n");
-	printf("	  Reserved for future use				 = 5\n");
-	printf("\n");
-	printf("        hdr_primaries \n");
-	printf("	  Display Gamut Rec709        		 = 0\n");
-	printf("	  Display Gamut Rec2020      		 = 1\n");
-	printf("	  Display Gamut P3D65         		 = 2\n");
-	printf("	  Display Gamut P3DCI(Theater)		 = 3\n");
-	printf("	  Display Gamut P3D60(ACES Cinema)	 = 4\n");
-	printf("\n");
-	printf("      Max bpc range 8 - 12\n");
-	printf("\n");
-	printf("      Mode index set by modeset automatically\n");
-	printf("\n");
-	printf("Example:\n");
-	printf("  %s 0 2 1 1 0 2 300 4000 10000 1 10 0", name);
-	printf(" ==>  Sets PGenerator to RGB444, Full range[0-255], HDR, LLDV, 300 MaxFall, 4000 MaxCll, 10000 max lum, 1 min lum, 10 bit\n");
-	return 0;
-}
- 
+// Start Patch RPI p4
+/* Variables to compile for RPI p4 */
+#define EGL_SMPTE2086_DISPLAY_PRIMARY_RX_EXT 0x3341
+#define EGL_SMPTE2086_DISPLAY_PRIMARY_RY_EXT 0x3342
+#define EGL_SMPTE2086_DISPLAY_PRIMARY_GX_EXT 0x3343
+#define EGL_SMPTE2086_DISPLAY_PRIMARY_GY_EXT 0x3344
+#define EGL_SMPTE2086_DISPLAY_PRIMARY_BX_EXT 0x3345
+#define EGL_SMPTE2086_DISPLAY_PRIMARY_BY_EXT 0x3346
+#define EGL_SMPTE2086_WHITE_POINT_X_EXT   0x3347
+#define EGL_SMPTE2086_WHITE_POINT_Y_EXT   0x3348
+#define EGL_SMPTE2086_MAX_LUMINANCE_EXT   0x3349
+#define EGL_SMPTE2086_MIN_LUMINANCE_EXT   0x334A
+
+/* PGenerator Conf Default Variables */
+char PGenerator_conf[100]="/etc/PGenerator/PGenerator.conf";
+std::string color_format="0";
+std::string rgb_quant_range="2";
+std::string is_hdr="0";
+std::string is_ll_dovi="0";
+std::string is_std_dovi="0";
+std::string eotf="2";
+std::string primaries="2";
+std::string max_fall="400";
+std::string max_cll="1000";
+std::string max_luma="4000";
+std::string min_luma="1";
+std::string max_bpc="8";
+std::string mode_idx="-1";
+
+/* Include RPI p4 header file */
+#include "ofxRPI4Window.h"
+// End Patch RPI p4
 
 int main(int argc, char **argv){
- int w=4096;
- int h=2160;
+ int w=1920;
+ int h=1080;
  int ok=0;
  std::string str;
  /* Check Distro */
@@ -102,52 +83,63 @@ int main(int argc, char **argv){
   exit(1);
  } 
  /* Continue */
-	ofSetLogLevel(OF_LOG_VERBOSE);
- if(argc < 2)
-	return usage(argv[0]);
- if(argc > 1) {
- // w=atoi(argv[1]);
- // h=atoi(argv[2]);
-	ofxRPI4Window::avi_info.output_format=atoi(argv[1]);
-	ofxRPI4Window::avi_info.rgb_quant_range=atoi(argv[2]);
-	ofxRPI4Window::isHDR=atoi(argv[3]);
-	ofxRPI4Window::isDolby=atoi(argv[4]);
-	ofxRPI4Window::is_std_Dolby=atoi(argv[5]);
-	ofxRPI4Window::eotf=(static_cast<hdmi_eotf>(atoi(argv[6])));
-	ofxRPI4Window::hdr_primaries=atoi(argv[7]);
-	ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.max_fall=atof(argv[8]);
-	ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.max_cll=atof(argv[9]);
-	ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.max_display_mastering_luminance=atof(argv[10]);
-	ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.min_display_mastering_luminance=atof(argv[11]);
-    ofxRPI4Window::avi_info.max_bpc=atoi(argv[12]);
-	ofxRPI4Window::mode_idx=atoi(argv[13]);
- } 
+ ofSetLogLevel(OF_LOG_SILENT);
+ if(argc == 3) {
+  w=atoi(argv[1]);
+  h=atoi(argv[2]);
+ }
+ if (str.find("Raspberry Pi 4") == string::npos) {
+  ofSetupOpenGL(w,h, OF_FULLSCREEN);
+  ofRunApp( new ofApp());
+ } else {
+// Start Patch RPI p4
+  /* Get var from PGenerator Conf */
+  std::ifstream file(PGenerator_conf);
+  while (std::getline(file, str)) {
+   std::vector<std::string> el;
+   boost::split(el, str, boost::is_any_of("="));
+   if(el[0] == "max_cll")         max_cll=el[1];
+   if(el[0] == "max_fall")        max_fall=el[1];
+   if(el[0] == "max_luma")        max_luma=el[1];
+   if(el[0] == "min_luma")        min_luma=el[1];
+   if(el[0] == "max_bpc")         max_bpc=el[1];
+   if(el[0] == "eotf")            eotf=el[1];
+   if(el[0] == "color_format")    color_format=el[1];
+   if(el[0] == "rgb_quant_range") rgb_quant_range=el[1];
+   if(el[0] == "is_hdr")          is_hdr=el[1];
+   if(el[0] == "is_ll_dovi")      is_ll_dovi=el[1];
+   if(el[0] == "is_std_dovi")     is_std_dovi=el[1];
+   if(el[0] == "primaries")       primaries=el[1];
+   if(el[0] == "mode_idx")        mode_idx=el[1];
+  }
+  file.close();
 
-#ifdef USE_X
-	ofSetupOpenGL(w,h, OF_FULLSCREEN);
-	ofRunApp( new ofApp());
-#endif
-	ofGLESWindowSettings settings;
-	settings.glesVersion = 3;
-	ofApp *cs_data;
-	cs_data = new ofApp();
-	cs_data->update();
-	
-    auto window = std::make_shared<ofxRPI4Window>(settings);
-    auto hdr = std::make_shared<ofxTinyEXR>();
-    auto app = std::make_shared<ofApp>();
+  /* Set var from PGenerator Conf */
+  ofxRPI4Window::avi_info.output_format=atoi(color_format.c_str());
+  ofxRPI4Window::avi_info.rgb_quant_range=atoi(rgb_quant_range.c_str());
+  ofxRPI4Window::isHDR=atoi(is_hdr.c_str());
+  ofxRPI4Window::isDolby=atoi(is_ll_dovi.c_str());
+  ofxRPI4Window::is_std_Dolby=atoi(is_std_dovi.c_str());
+  ofxRPI4Window::eotf=(static_cast<hdmi_eotf>(atoi(eotf.c_str())));
+  ofxRPI4Window::hdr_primaries=atoi(primaries.c_str());
+  ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.max_fall=atof(max_fall.c_str());
+  ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.max_cll=atof(max_cll.c_str());
+  ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.max_display_mastering_luminance=atof(max_luma.c_str());
+  ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.min_display_mastering_luminance=atof(min_luma.c_str());
+  ofxRPI4Window::avi_info.max_bpc=atoi(max_bpc.c_str());
+  ofxRPI4Window::mode_idx=atoi(mode_idx.c_str());
 
-	delete cs_data;
-
-//	ofCreateWindow(settings);
-    ofRunApp(window, app);
-
-	
-	// this kicks off the running of my app
-	// can be OF_WINDOW or OF_FULLSCREEN
-	// pass in width and height too:
-	//ofRunApp(new ofApp());
-    ofRunMainLoop();
-
-} 
- 
+  /* RPI4 Run App */
+  ofGLESWindowSettings settings;
+  settings.glesVersion = 3;
+  ofApp *cs_data;
+  cs_data = new ofApp();
+  cs_data->update();
+  auto window = std::make_shared<ofxRPI4Window>(settings);
+  auto app = std::make_shared<ofApp>();
+  delete cs_data;
+  ofRunApp(window, app);
+  ofRunMainLoop();
+// End Patch RPI p4
+ }
+}
