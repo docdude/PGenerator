@@ -23,6 +23,7 @@
 
 // Start Patch RPI p4
 /* Variables to compile for RPI p4 */
+#if 0
 #define EGL_SMPTE2086_DISPLAY_PRIMARY_RX_EXT 0x3341
 #define EGL_SMPTE2086_DISPLAY_PRIMARY_RY_EXT 0x3342
 #define EGL_SMPTE2086_DISPLAY_PRIMARY_GX_EXT 0x3343
@@ -33,7 +34,7 @@
 #define EGL_SMPTE2086_WHITE_POINT_Y_EXT   0x3348
 #define EGL_SMPTE2086_MAX_LUMINANCE_EXT   0x3349
 #define EGL_SMPTE2086_MIN_LUMINANCE_EXT   0x334A
-
+#endif
 /* PGenerator Conf Default Variables */
 char PGenerator_conf[100]="/etc/PGenerator/PGenerator.conf";
 std::string color_format="0";
