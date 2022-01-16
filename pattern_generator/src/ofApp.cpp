@@ -27,7 +27,11 @@
 */
 void ofApp::setup(){
  ofSetBackgroundAuto(true); 
- ofBackground(def_r,def_g,def_b);
+ if (ofxRPI4Window::avi_info.max_bpc == 8) {
+	ofBackground(def_r,def_g,def_b);
+ } else {
+	of10bitBackground(def_r,def_g,def_b);
+ }
  ofHideCursor();
  /* Pid Creation */
  std::ofstream pidfile (pid_file);
@@ -176,10 +180,12 @@ void ofApp::draw(){
   sprintf(buffer,"Position: %d %d",arr_posx[i][to_draw],arr_posy[i][to_draw]);
   ofApp::log(buffer);
   sprintf(buffer,"Bits: %d",arr_bits[i][to_draw]);
-  ofApp::log(buffer);
+  ofApp::log(buffer); 
 #if 1
   if (ofxRPI4Window::isHDR && arr_bits[i][to_draw] == 10) {  
 	ofSet10bitColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
+  if(arr_redbg[i][to_draw] != -1)
+   of10bitBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
   } else if (ofxRPI4Window::isHDR && arr_bits[i][to_draw] == 12)  {	
 	ofSetFloatColor((float)arr_red[i][to_draw],(float)arr_green[i][to_draw],(float)arr_blue[i][to_draw]);
   } else if (ofxRPI4Window::isHDR && arr_bits[i][to_draw] == 14)  {	
@@ -189,14 +195,17 @@ void ofApp::draw(){
   } else {
 	  if (arr_bits[i][to_draw] == 10) {  
 	     ofSet10bitColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
+		 of10bitBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
 	  } else {
 	     ofSetColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
+		 if(arr_redbg[i][to_draw] != -1)
+		 ofBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
 	  }
   }
 #endif
 
-  if(arr_redbg[i][to_draw] != -1)
-   ofBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
+//  if(arr_redbg[i][to_draw] != -1)
+//   ofBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
   //else
   //ofBackground(def_r,def_g,def_b);
   if(arr_draw[i][to_draw] == 0)
