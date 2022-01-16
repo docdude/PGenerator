@@ -184,14 +184,20 @@ void ofApp::draw(){
 #if 1
   if (ofxRPI4Window::isHDR && arr_bits[i][to_draw] == 10) {  
 	ofSet10bitColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
-  if(arr_redbg[i][to_draw] != -1)
-   of10bitBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
+	if(arr_redbg[i][to_draw] != -1)
+		of10bitBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
   } else if (ofxRPI4Window::isHDR && arr_bits[i][to_draw] == 12)  {	
 	ofSetFloatColor((float)arr_red[i][to_draw],(float)arr_green[i][to_draw],(float)arr_blue[i][to_draw]);
+	if(arr_redbg[i][to_draw] != -1)
+		of10bitBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
   } else if (ofxRPI4Window::isHDR && arr_bits[i][to_draw] == 14)  {	
 	ofSetFloatColor((float)arr_red[i][to_draw],(float)arr_green[i][to_draw],(float)arr_blue[i][to_draw]);
+	if(arr_redbg[i][to_draw] != -1)
+		of10bitBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
   } else if (ofxRPI4Window::isHDR && arr_bits[i][to_draw] == 16)  {	
 	ofSetFloatColor((float)arr_red[i][to_draw],(float)arr_green[i][to_draw],(float)arr_blue[i][to_draw]);
+	if(arr_redbg[i][to_draw] != -1)
+		of10bitBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
   } else {
 	  if (arr_bits[i][to_draw] == 10) {  
 	     ofSet10bitColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
