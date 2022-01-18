@@ -19,7 +19,7 @@
 */
 
 #include "ofApp.h"
-#include <GLES3/gl3.h>
+
 /*
  ##########################################################
  #                           Setup                        #
@@ -28,9 +28,9 @@
 void ofApp::setup(){
  ofSetBackgroundAuto(true); 
  if (ofxRPI4Window::avi_info.max_bpc == 8) {
-	ofBackground(def_r,def_g,def_b);
+  ofBackground(def_r,def_g,def_b);
  } else {
-	of10bitBackground(def_r,def_g,def_b);
+  of10bitBackground(def_r,def_g,def_b);
  }
  ofHideCursor();
  /* Pid Creation */
@@ -383,46 +383,46 @@ void ofApp::image() {
 
 
 if (ofxRPI4Window::avi_info.max_bpc == 10) {
-	float_img.clear();
+  float_img.clear();
 
-	float_img.load(arr_image[i][to_draw]);
-   	int width = float_img.getPixels().getWidth();
-    int height = float_img.getPixels().getHeight();
-    int channels = float_img.getPixels().getNumChannels();
+  float_img.load(arr_image[i][to_draw]);
+  int width = float_img.getPixels().getWidth();
+  int height = float_img.getPixels().getHeight();
+  int channels = float_img.getPixels().getNumChannels();
     
-    ofLogNotice("image specs") << "width " << width << " height " << height << " channels " << channels;
-	ofLogNotice("image specs2") << "x " << arr_posx[i][to_draw] << " y " << arr_posy[i][to_draw];
-	float_img.rotate90(arr_rotate[i][to_draw]);
-     ofSet10bitColor(65535,65535,65535,65535);
-	float ratio = float_img.getWidth()/float_img.getHeight();
-	ofLogNotice("scaled image specs") << "width " << ofGetWidth() << " height " << (ofGetWidth()/ratio) << " channels " << channels;
+  ofLogNotice("image specs") << "width " << width << " height " << height << " channels " << channels;
+  ofLogNotice("image specs2") << "x " << arr_posx[i][to_draw] << " y " << arr_posy[i][to_draw];
+  float_img.rotate90(arr_rotate[i][to_draw]);
+  ofSet10bitColor(65535,65535,65535,65535);
+  float ratio = float_img.getWidth()/float_img.getHeight();
+  ofLogNotice("scaled image specs") << "width " << ofGetWidth() << " height " << (ofGetWidth()/ratio) << " channels " << channels;
 
-    float_img.update();
+  float_img.update();
 
- //   float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw]*scale_dim1,arr_dim2[i][to_draw]*scale_dim2); 	  
+//  float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw]*scale_dim1,arr_dim2[i][to_draw]*scale_dim2); 	  
 //	float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],ofGetWidth(),ofGetWidth()/ratio);
   float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
 
 } else {
-	 img.clear();
+  img.clear();
 
-	img.load(arr_image[i][to_draw]);
-    int width = img.getPixels().getWidth();
-    int height = img.getPixels().getHeight();
-    int channels = img.getPixels().getNumChannels();
+  img.load(arr_image[i][to_draw]);
+  int width = img.getPixels().getWidth();
+  int height = img.getPixels().getHeight();
+  int channels = img.getPixels().getNumChannels();
    
-    ofLogNotice("image specs") << "width " << width << " height " << height << " channels " << channels;
-	ofLogNotice("image specs2") << "x " << arr_posx[i][to_draw] << " y " << arr_posy[i][to_draw];
+  ofLogNotice("image specs") << "width " << width << " height " << height << " channels " << channels;
+  ofLogNotice("image specs2") << "x " << arr_posx[i][to_draw] << " y " << arr_posy[i][to_draw];
 
-	img.rotate90(arr_rotate[i][to_draw]);
-    ofSetColor(255,255,255,255);
+  img.rotate90(arr_rotate[i][to_draw]);
+  ofSetColor(255,255,255,255);
 
-    img.update();
+  img.update();
 
 
-	img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
-
-  //  img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw]*scale_dim1,arr_dim2[i][to_draw]*scale_dim2); 
+//  img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw]*scale_dim1,arr_dim2[i][to_draw]*scale_dim2);
+  img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
+ 
 
 }
 
