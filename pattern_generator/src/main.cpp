@@ -20,21 +20,14 @@
  
 #include "ofMain.h"
 #include "ofApp.h"
-
-// Start Patch RPI p4
-/* Variables to compile for RPI p4 */
-#if 0
-#define EGL_SMPTE2086_DISPLAY_PRIMARY_RX_EXT 0x3341
-#define EGL_SMPTE2086_DISPLAY_PRIMARY_RY_EXT 0x3342
-#define EGL_SMPTE2086_DISPLAY_PRIMARY_GX_EXT 0x3343
-#define EGL_SMPTE2086_DISPLAY_PRIMARY_GY_EXT 0x3344
-#define EGL_SMPTE2086_DISPLAY_PRIMARY_BX_EXT 0x3345
-#define EGL_SMPTE2086_DISPLAY_PRIMARY_BY_EXT 0x3346
-#define EGL_SMPTE2086_WHITE_POINT_X_EXT   0x3347
-#define EGL_SMPTE2086_WHITE_POINT_Y_EXT   0x3348
-#define EGL_SMPTE2086_MAX_LUMINANCE_EXT   0x3349
-#define EGL_SMPTE2086_MIN_LUMINANCE_EXT   0x334A
+#define TEST_BUILD
+#ifdef TEST_BUILD
+ const char * pgenCodeVersion = "V01.23T";
 #endif
+#ifdef REL_BUILD
+ const char * pgenCodeVersion = "V01.23R";
+#endif
+
 /* PGenerator Conf Default Variables */
 char PGenerator_conf[100]="/etc/PGenerator/PGenerator.conf";
 std::string color_format="0";
@@ -89,6 +82,7 @@ int main(int argc, char **argv){
   w=atoi(argv[1]);
   h=atoi(argv[2]);
  }
+ ofLog() << "PGenerator version " << pgenCodeVersion;
  if (str.find("Raspberry Pi 4") == string::npos) {
   ofSetupOpenGL(w,h, OF_FULLSCREEN);
   ofRunApp( new ofApp());
@@ -119,8 +113,8 @@ int main(int argc, char **argv){
   ofxRPI4Window::avi_info.output_format=atoi(color_format.c_str());
   ofxRPI4Window::avi_info.rgb_quant_range=atoi(rgb_quant_range.c_str());
   ofxRPI4Window::isHDR=atoi(is_hdr.c_str());
-  ofxRPI4Window::isDolby=atoi(is_ll_dovi.c_str());
-  ofxRPI4Window::is_std_Dolby=atoi(is_std_dovi.c_str());
+  ofxRPI4Window::isDoVi=atoi(is_ll_dovi.c_str());
+  ofxRPI4Window::is_std_DoVi=atoi(is_std_dovi.c_str());
   ofxRPI4Window::eotf=(static_cast<hdmi_eotf>(atoi(eotf.c_str())));
   ofxRPI4Window::hdr_primaries=atoi(primaries.c_str());
   ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.max_fall=atof(max_fall.c_str());
@@ -139,6 +133,7 @@ int main(int argc, char **argv){
   auto window = std::make_shared<ofxRPI4Window>(settings);
   auto app = std::make_shared<ofApp>();
   delete cs_data;
+
   ofRunApp(window, app);
   ofRunMainLoop();
 // End Patch RPI p4
