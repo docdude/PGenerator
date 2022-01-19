@@ -177,11 +177,17 @@ void ofApp::draw(){
   ofApp::log(buffer);
   sprintf(buffer,"Bits: %d",arr_bits[i][to_draw]);
   ofApp::log(buffer); 
-#if 1
+
   if (ofxRPI4Window::isHDR && !ofxRPI4Window::isDoVi && !ofxRPI4Window::is_std_DoVi) { 
-	ofSet10bitColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
-	if(arr_redbg[i][to_draw] != -1)
-		of10bitBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
+	if (ofxRPI4Window::bit_depth == 10) {
+		ofSet10bitColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
+		if(arr_redbg[i][to_draw] != -1)
+			of10bitBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
+	} else if (ofxRPI4Window::bit_depth == 8) {
+		 ofSetColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
+		 if(arr_redbg[i][to_draw] != -1)
+			ofBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
+	}
   } else {
 	  if (arr_bits[i][to_draw] == 10) {  
 	     ofSet10bitColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
@@ -192,7 +198,7 @@ void ofApp::draw(){
 		 ofBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
 	  }
   }
-#endif
+  
 
 //  if(arr_redbg[i][to_draw] != -1)
 //   ofBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
@@ -382,7 +388,7 @@ void ofApp::image() {
  }
 
 
-if (ofxRPI4Window::avi_info.max_bpc == 10) {
+if (ofxRPI4Window::avi_info.max_bpc == 10 && ofxRPI4Window::isHDR) {
   float_img.clear();
 
   float_img.load(arr_image[i][to_draw]);
@@ -393,7 +399,7 @@ if (ofxRPI4Window::avi_info.max_bpc == 10) {
   ofLogNotice("image specs") << "width " << width << " height " << height << " channels " << channels;
   ofLogNotice("image specs2") << "x " << arr_posx[i][to_draw] << " y " << arr_posy[i][to_draw];
   float_img.rotate90(arr_rotate[i][to_draw]);
-  ofSet10bitColor(65535,65535,65535,65535);
+  ofSet10bitColor(1023,1023,1023,1023);
   float ratio = float_img.getWidth()/float_img.getHeight();
   ofLogNotice("scaled image specs") << "width " << ofGetWidth() << " height " << (ofGetWidth()/ratio) << " channels " << channels;
 

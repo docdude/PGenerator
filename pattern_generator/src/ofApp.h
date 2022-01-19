@@ -24,7 +24,7 @@
 
 #include "ofMain.h"
 #include "ofxRPI4Window.h"
-#include "ofxTinyEXR.h"
+//#include "ofxTinyEXR.h"
 
 class ofApp : public ofBaseApp{
  public:
