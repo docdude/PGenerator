@@ -19,6 +19,7 @@
 */
 
 #include "ofApp.h"
+#include "rgb2ycbcr.h"
 
 /*
  ##########################################################
@@ -28,16 +29,31 @@
 void ofApp::setup(){
  ofSetBackgroundAuto(true); 
  if (ofxRPI4Window::avi_info.max_bpc == 8) {
-  ofBackground(def_r,def_g,def_b);
+	if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
+		RGB data = RGB(arr_redbg[i][to_draw], arr_greenbg[i][to_draw], arr_bluebg[i][to_draw]);
+		YCbCr bg = RGB2YCbCr(data,8, ofxRPI4Window::avi_info.colorimetry);
+		ofBackground(bg.Cb,bg.Cr,bg.Y);  //YCbCr444, luminance is last
+	} else {
+		ofBackground(def_r,def_g,def_b);
+	}
  } else {
-  of10bitBackground(def_r,def_g,def_b);
+	if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
+		RGB data = RGB(arr_redbg[i][to_draw], arr_greenbg[i][to_draw], arr_bluebg[i][to_draw]);
+		YCbCr bg = RGB2YCbCr(data,10, ofxRPI4Window::avi_info.colorimetry);
+		of10bitBackground(bg.Cb,bg.Cr,bg.Y);  //YCbCr444, luminance is last
+	} else {
+		of10bitBackground(def_r,def_g,def_b);
+	}
  }
  ofHideCursor();
  /* Pid Creation */
  std::ofstream pidfile (pid_file);
  pidfile << getpid();
  pidfile.close();
-
+// if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
+//	shader.load("rgb_limited_8bit");
+//	ofxRPI4Window::shader_init = 1;
+// }
 }
 
 /*
@@ -70,6 +86,14 @@ void ofApp::update(){
    if(el[0] == "DRAW") {
     draw_type=el[1];
 	ofxRPI4Window::colorspace_on = 1;
+	if (ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1 && !shader.isLoaded()) {
+
+		shader.load("rgb2ycbcr");
+//	} else if (ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1 && ofxRPI4Window::bit_depth == 10 && !shader.isLoaded()) {
+
+//		shader.load("rgb2ycbcr");
+	}	
+	ofxRPI4Window::shader_init=0;
    }
    if(el[0] == "TEXT")
     text_to_write=el[1];
@@ -189,13 +213,33 @@ void ofApp::draw(){
 			ofBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
 	}
   } else {
-	  if (arr_bits[i][to_draw] == 10) {  
+	  if (ofxRPI4Window::bit_depth == 10) {  
 	     ofSet10bitColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
-		 of10bitBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
+		 if(arr_redbg[i][to_draw] != -1) {
+			if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
+				RGB data = RGB(arr_redbg[i][to_draw], arr_greenbg[i][to_draw], arr_bluebg[i][to_draw]);
+				YCbCr bg = RGB2YCbCr(data,10, ofxRPI4Window::avi_info.colorimetry);
+//								ofLog() << bg.Y << " " << bg.Cb << " " << bg.Cr ;
+
+				of10bitBackground(bg.Cb,bg.Cr,bg.Y);  //in YCbCr444, luminance is last channel
+			} else {
+				of10bitBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
+			}
+		 }
+ 
 	  } else {
 	     ofSetColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
-		 if(arr_redbg[i][to_draw] != -1)
-		 ofBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
+		 if(arr_redbg[i][to_draw] != -1) {
+			if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
+				RGB data = RGB(arr_redbg[i][to_draw], arr_greenbg[i][to_draw], arr_bluebg[i][to_draw]);
+				YCbCr bg = RGB2YCbCr(data,8,ofxRPI4Window::avi_info.colorimetry);
+//				ofLog() << bg.Y << " " << bg.Cb << " " << bg.Cr ;
+				ofBackground(bg.Cb,bg.Cr,bg.Y);  //in YCbCr444, luminance is last channel
+			} else {
+				ofBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
+			}
+
+		 }
 	  }
   }
   
@@ -314,13 +358,21 @@ void ofApp::rectangle () {
  if(arr_posx[i][to_draw] == -1) {
   arr_posx[i][to_draw]=(ofGetWindowWidth()-arr_dim1[i][to_draw])/2;
   arr_posy[i][to_draw]=(ofGetWindowHeight()-arr_dim2[i][to_draw])/2;
+ } 
+//	glUseProgram(shader.getProgram());
+ if (!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {
+	//ofShader  currentShader = static_cast<ofGLProgrammableRenderer*>(ofxRPI4Window::currentRenderer.get())->getCurrentShader();
+	//bool ok = currentShader.getProgram() == shader.getProgram();
+//	shader.getProgram();
+	shader.begin();
+    shader.setUniform1i("bits", ofxRPI4Window::bit_depth);
+    shader.setUniform1i("colorimetry", ofxRPI4Window::avi_info.colorimetry);
  }
-// 	ofLogNotice("rect specs1") << "width " << arr_dim1[i][to_draw] << " height " << arr_dim2[i][to_draw];
-//	ofLogNotice("rect specs2") << "x " << arr_posx[i][to_draw] << " y " << arr_posy[i][to_draw];
-
  ofDrawRectangle(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
+ if (!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {
+    shader.end();
 
-
+ }
 }
 
 /*
@@ -451,3 +503,4 @@ void ofApp::log(std::string str) {
   }   
   std::cout << str << std::endl;
 }
+

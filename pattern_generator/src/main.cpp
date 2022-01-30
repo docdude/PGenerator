@@ -32,6 +32,7 @@
 char PGenerator_conf[100]="/etc/PGenerator/PGenerator.conf";
 std::string color_format="0";
 std::string rgb_quant_range="2";
+std::string colorimetry="0";
 std::string is_hdr="0";
 std::string is_ll_dovi="0";
 std::string is_std_dovi="0";
@@ -101,6 +102,7 @@ int main(int argc, char **argv){
    if(el[0] == "eotf")            eotf=el[1];
    if(el[0] == "color_format")    color_format=el[1];
    if(el[0] == "rgb_quant_range") rgb_quant_range=el[1];
+   if(el[0] == "colorimetry") 	  colorimetry=el[1];
    if(el[0] == "is_hdr")          is_hdr=el[1];
    if(el[0] == "is_ll_dovi")      is_ll_dovi=el[1];
    if(el[0] == "is_std_dovi")     is_std_dovi=el[1];
@@ -112,6 +114,7 @@ int main(int argc, char **argv){
   /* Set var from PGenerator Conf */
   ofxRPI4Window::avi_info.output_format=atoi(color_format.c_str());
   ofxRPI4Window::avi_info.rgb_quant_range=atoi(rgb_quant_range.c_str());
+  ofxRPI4Window::avi_info.colorimetry=atoi(colorimetry.c_str());
   ofxRPI4Window::isHDR=atoi(is_hdr.c_str());
   ofxRPI4Window::isDoVi=atoi(is_ll_dovi.c_str());
   ofxRPI4Window::is_std_DoVi=atoi(is_std_dovi.c_str());

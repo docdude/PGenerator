@@ -116,6 +116,6 @@ ofPixels pixels;
 	void image_local();
   void log(std::string);
  //
+ int shader_init;
 };
- //void image_local();
-  
+
