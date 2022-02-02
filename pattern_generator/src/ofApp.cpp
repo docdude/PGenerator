@@ -97,15 +97,15 @@ void ofApp::update(){
    if(el[0] == "DRAW") {
     draw_type=el[1];
 	ofxRPI4Window::colorspace_on = 1;
-	if (ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1 && !shader.isLoaded()) {
+	if (ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {// && !shader.isLoaded()) {
 
 //ofxRPI4Window::rgb2ycbcr_shader();
 
 		shader.load("rgb2ycbcr");
-
+		ofxRPI4Window::shader_init=0;
 
 	}	
-	ofxRPI4Window::shader_init=0;
+
    }
    if(el[0] == "TEXT")
     text_to_write=el[1];
