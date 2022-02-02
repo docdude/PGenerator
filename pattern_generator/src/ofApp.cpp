@@ -99,9 +99,9 @@ void ofApp::update(){
 	ofxRPI4Window::colorspace_on = 1;
 	if (ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {// && !shader.isLoaded()) {
 
-//ofxRPI4Window::rgb2ycbcr_shader();
+ofxRPI4Window::rgb2ycbcr_shader();
 
-		shader.load("rgb2ycbcr");
+	//	shader.load("rgb2ycbcr");
 		ofxRPI4Window::shader_init=0;
 
 	}	
@@ -387,19 +387,20 @@ void ofApp::rectangle () {
 	//ofShader  currentShader = static_cast<ofGLProgrammableRenderer*>(ofxRPI4Window::currentRenderer.get())->getCurrentShader();
 	//bool ok = currentShader.getProgram() == shader.getProgram();
 //	shader.getProgram();
-//	ofxRPI4Window::shader.begin();
-  //  ofxRPI4Window::shader.setUniform1i("bits", ofxRPI4Window::bit_depth);
-  //  ofxRPI4Window::shader.setUniform1i("colorimetry", ofxRPI4Window::avi_info.colorimetry);
-  shader.begin();
-   shader.setUniform1i("bits", ofxRPI4Window::bit_depth);
- shader.setUniform1i("colorimetry", ofxRPI4Window::avi_info.colorimetry);
- shader.setUniform1i("color_format", ofxRPI4Window::avi_info.output_format);
+	ofxRPI4Window::shader.begin();
+    ofxRPI4Window::shader.setUniform1i("bits", ofxRPI4Window::bit_depth);
+    ofxRPI4Window::shader.setUniform1i("colorimetry", ofxRPI4Window::avi_info.colorimetry);
+	ofxRPI4Window::shader.setUniform1i("color_format", ofxRPI4Window::avi_info.output_format);
+ // shader.begin();
+ //  shader.setUniform1i("bits", ofxRPI4Window::bit_depth);
+ //shader.setUniform1i("colorimetry", ofxRPI4Window::avi_info.colorimetry);
+ //shader.setUniform1i("color_format", ofxRPI4Window::avi_info.output_format);
 
  }
  ofDrawRectangle(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
  if (!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {
-  //  ofxRPI4Window::shader.end();
-shader.end();
+    ofxRPI4Window::shader.end();
+//shader.end();
  }
 }
 
