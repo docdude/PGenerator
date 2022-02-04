@@ -22,10 +22,10 @@
 #include "ofApp.h"
 #define TEST_BUILD
 #ifdef TEST_BUILD
- const char * pgenCodeVersion = "V01.23T";
+ const char * pgenCodeVersion = "V02.00T";
 #endif
 #ifdef REL_BUILD
- const char * pgenCodeVersion = "V01.23R";
+ const char * pgenCodeVersion = "V02.00R";
 #endif
 
 /* PGenerator Conf Default Variables */

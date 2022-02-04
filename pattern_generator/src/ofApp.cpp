@@ -97,13 +97,10 @@ void ofApp::update(){
    if(el[0] == "DRAW") {
     draw_type=el[1];
 	ofxRPI4Window::colorspace_on = 1;
-	if (ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {// && !shader.isLoaded()) {
-
-ofxRPI4Window::rgb2ycbcr_shader();
-
+	if (ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1){// && !ofxRPI4Window::shader.isLoaded()) {
+ 		ofxRPI4Window::rgb2ycbcr_shader();
 	//	shader.load("rgb2ycbcr");
 		ofxRPI4Window::shader_init=0;
-
 	}	
 
    }
@@ -231,7 +228,6 @@ void ofApp::draw(){
 			if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
 				RGB data = RGB(arr_redbg[i][to_draw], arr_greenbg[i][to_draw], arr_bluebg[i][to_draw]);
 				YCbCr bg = RGB2YCbCr(data,10, ofxRPI4Window::avi_info.colorimetry);
-//								ofLog() << bg.Y << " " << bg.Cb << " " << bg.Cr ;
 				if (ofxRPI4Window::avi_info.output_format == 1) {
 					of10bitBackground(bg.Cb,bg.Cr,bg.Y);  //in YCbCr444, luminance is last channel
 				}
@@ -250,7 +246,6 @@ void ofApp::draw(){
 			if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
 				RGB data = RGB(arr_redbg[i][to_draw], arr_greenbg[i][to_draw], arr_bluebg[i][to_draw]);
 				YCbCr bg = RGB2YCbCr(data,8,ofxRPI4Window::avi_info.colorimetry);
-//				ofLog() << bg.Y << " " << bg.Cb << " " << bg.Cr ;
 				if (ofxRPI4Window::avi_info.output_format == 1) {
 					ofBackground(bg.Cb,bg.Cr,bg.Y);  //in YCbCr444, luminance is last channel
 				}
@@ -267,10 +262,6 @@ void ofApp::draw(){
   }
   
 
-//  if(arr_redbg[i][to_draw] != -1)
-//   ofBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
-  //else
-  //ofBackground(def_r,def_g,def_b);
   if(arr_draw[i][to_draw] == 0)
    ::exit(0);
   if(arr_draw[i][to_draw] ==  1)
@@ -386,21 +377,21 @@ void ofApp::rectangle () {
  if (!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {
 	//ofShader  currentShader = static_cast<ofGLProgrammableRenderer*>(ofxRPI4Window::currentRenderer.get())->getCurrentShader();
 	//bool ok = currentShader.getProgram() == shader.getProgram();
-//	shader.getProgram();
+	//shader.getProgram();
 	ofxRPI4Window::shader.begin();
     ofxRPI4Window::shader.setUniform1i("bits", ofxRPI4Window::bit_depth);
     ofxRPI4Window::shader.setUniform1i("colorimetry", ofxRPI4Window::avi_info.colorimetry);
 	ofxRPI4Window::shader.setUniform1i("color_format", ofxRPI4Window::avi_info.output_format);
- // shader.begin();
- //  shader.setUniform1i("bits", ofxRPI4Window::bit_depth);
- //shader.setUniform1i("colorimetry", ofxRPI4Window::avi_info.colorimetry);
- //shader.setUniform1i("color_format", ofxRPI4Window::avi_info.output_format);
+	//shader.begin();
+	//shader.setUniform1i("bits", ofxRPI4Window::bit_depth);
+	//shader.setUniform1i("colorimetry", ofxRPI4Window::avi_info.colorimetry);
+	//shader.setUniform1i("color_format", ofxRPI4Window::avi_info.output_format);
 
  }
  ofDrawRectangle(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
  if (!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {
     ofxRPI4Window::shader.end();
-//shader.end();
+	//shader.end();
  }
 }
 

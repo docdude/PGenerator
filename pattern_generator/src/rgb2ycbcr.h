@@ -66,14 +66,14 @@ public:
 };
 
 static YCbCr RGB2YCbCr(RGB rgb, int bits, int colorimetry) {
-	float primaries[2][3] =
+	float coeffs[2][3] =
 	{
 	{ 0.2126, 0.7152, 0.0722}, 
 	{ 0.2627, 0.6780, 0.0593}, 
 	};
-	int offset1 = 224 << (bits - 8);
-	int offset2 = 219 << (bits - 8);
-	int offset3 = 128 << (bits - 8);
+	int scalar1 = 224 << (bits - 8);
+	int scalar2 = 219 << (bits - 8);
+	int offset = 128 << (bits - 8);
 	int R, G, B;
 	int idx;
 	float d, e;
@@ -101,20 +101,20 @@ static YCbCr RGB2YCbCr(RGB rgb, int bits, int colorimetry) {
 		d = 1.8814;
 		e = 1.4746;
 	}
-	int Y = std::round((primaries[idx][0] * R + primaries[idx][1]* G + primaries[idx][2] * B));
-	int Cb = std::round(((-primaries[idx][0]/d) * R - (primaries[idx][1]/d) * G + ((d/2)/d) * B)*offset1/offset2 + offset3); // Chrominance Blue
-	int Cr = std::round((((e/2)/e) * R - (primaries[idx][1]/e) * G - (primaries[idx][2]/e) * B)*offset1/offset2 + offset3); // Chrominance Red
+	int Y = std::round((coeffs[idx][0] * R + coeffs[idx][1]* G + coeffs[idx][2] * B));
+	int Cb = std::round(((-coeffs[idx][0]/d) * R - (coeffs[idx][1]/d) * G + ((d/2)/d) * B)*scalar1/scalar2 + offset); // Chrominance Blue
+	int Cr = std::round((((e/2)/e) * R - (coeffs[idx][1]/e) * G - (coeffs[idx][2]/e) * B)*scalar1/scalar2 + offset); // Chrominance Red
 
 	return YCbCr(Y, Cb, Cr); 
 }
 
 static YCbCr RGB2YCbCr_2020(RGB rgb, int bits) {
-	int offset1 = 224 << (bits - 8);
-	int offset2 = 219 << (bits - 8);
-	int offset3 = 128 << (bits - 8);
+	int scalar1 = 224 << (bits - 8);
+	int scalar2 = 219 << (bits - 8);
+	int offset = 128 << (bits - 8);
 	int Y = (0.2627 * rgb.R + 0.6780 * rgb.G + 0.0593 * rgb.B);
-	int Cb = ((-0.2627/1.8814) * rgb.R - (0.6780/1.8814) * rgb.G + (0.9278/1.814) * rgb.B)*offset1/offset2 + offset3; // Chrominance Blue
-	int Cr = ((0.7373/1.4746) * rgb.R - (0.6780/1.4746) * rgb.G - (0.0593/1.4746) * rgb.B)*offset1/offset2 + offset3; // Chrominance Red
+	int Cb = ((-0.2627/1.8814) * rgb.R - (0.6780/1.8814) * rgb.G + (0.9278/1.814) * rgb.B)*scalar1/scalar2 + offset; // Chrominance Blue
+	int Cr = ((0.7373/1.4746) * rgb.R - (0.6780/1.4746) * rgb.G - (0.0593/1.4746) * rgb.B)*scalar1/scalar2 + offset; // Chrominance Red
 
 	return YCbCr(Y, Cb, Cr); 
 }
