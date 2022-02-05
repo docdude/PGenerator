@@ -113,6 +113,11 @@ void ofApp::update(){
    if(el[0] == "IMAGE") {
     img_file=el[1];
 	ofxRPI4Window::colorspace_on=0;
+	if (ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1){// && !ofxRPI4Window::shader.isLoaded()) {
+ 		ofxRPI4Window::rgb2ycbcr_shader();
+	//	shader.load("rgb2ycbcr");
+		ofxRPI4Window::shader_init=0;
+	}
    } 
    if(el[0] == "ROTATE")
     img_rotate=boost::lexical_cast<int>(el[1]);
@@ -212,15 +217,43 @@ void ofApp::draw(){
   ofApp::log(buffer); 
 
   if (ofxRPI4Window::isHDR && !ofxRPI4Window::isDoVi && !ofxRPI4Window::is_std_DoVi) { 
-	if (ofxRPI4Window::bit_depth == 10) {
-		ofSet10bitColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
-		if(arr_redbg[i][to_draw] != -1)
-			of10bitBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
-	} else if (ofxRPI4Window::bit_depth == 8) {
-		 ofSetColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
-		 if(arr_redbg[i][to_draw] != -1)
-			ofBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
-	}
+	  if (ofxRPI4Window::bit_depth == 10) {  
+	     ofSet10bitColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
+		 if(arr_redbg[i][to_draw] != -1) {
+			if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
+				RGB data = RGB(arr_redbg[i][to_draw], arr_greenbg[i][to_draw], arr_bluebg[i][to_draw]);
+				YCbCr bg = RGB2YCbCr(data,10, ofxRPI4Window::avi_info.colorimetry);
+				if (ofxRPI4Window::avi_info.output_format == 1) {
+					of10bitBackground(bg.Cb,bg.Cr,bg.Y);  //in YCbCr444, luminance is last channel
+				}
+				if (ofxRPI4Window::avi_info.output_format == 2) {
+					of10bitBackground(bg.Y,bg.Cb,bg.Cr);  //in YCbCr422
+				}
+
+			} else {
+				of10bitBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
+			}
+		 }
+ 
+	  } else {
+	     ofSetColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
+		 if(arr_redbg[i][to_draw] != -1) {
+			if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
+				RGB data = RGB(arr_redbg[i][to_draw], arr_greenbg[i][to_draw], arr_bluebg[i][to_draw]);
+				YCbCr bg = RGB2YCbCr(data,8,ofxRPI4Window::avi_info.colorimetry);
+				if (ofxRPI4Window::avi_info.output_format == 1) {
+					ofBackground(bg.Cb,bg.Cr,bg.Y);  //in YCbCr444, luminance is last channel
+				}
+				if (ofxRPI4Window::avi_info.output_format == 2) {
+					ofBackground(bg.Y,bg.Cb,bg.Cr);  //in YCbCr422
+				}
+
+			} else {
+				ofBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
+			}
+
+		 }
+	  }
   } else {
 	  if (ofxRPI4Window::bit_depth == 10) {  
 	     ofSet10bitColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
@@ -382,6 +415,7 @@ void ofApp::rectangle () {
     ofxRPI4Window::shader.setUniform1i("bits", ofxRPI4Window::bit_depth);
     ofxRPI4Window::shader.setUniform1i("colorimetry", ofxRPI4Window::avi_info.colorimetry);
 	ofxRPI4Window::shader.setUniform1i("color_format", ofxRPI4Window::avi_info.output_format);
+	ofxRPI4Window::shader.setUniform1i("is_image", 0);
 	//shader.begin();
 	//shader.setUniform1i("bits", ofxRPI4Window::bit_depth);
 	//shader.setUniform1i("colorimetry", ofxRPI4Window::avi_info.colorimetry);
@@ -476,11 +510,23 @@ if (ofxRPI4Window::avi_info.max_bpc == 10 && ofxRPI4Window::isHDR) {
   ofLogNotice("scaled image specs") << "width " << ofGetWidth() << " height " << (ofGetWidth()/ratio) << " channels " << channels;
 
   float_img.update();
+ if (!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {
 
+    float_img.getTexture().bind();
+	ofxRPI4Window::shader.begin();
+    ofxRPI4Window::shader.setUniform1i("bits", ofxRPI4Window::bit_depth);
+    ofxRPI4Window::shader.setUniform1i("colorimetry", ofxRPI4Window::avi_info.colorimetry);
+	ofxRPI4Window::shader.setUniform1i("color_format", ofxRPI4Window::avi_info.output_format);
+	ofxRPI4Window::shader.setUniform1i("is_image", 1);
+
+ }
 //  float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw]*scale_dim1,arr_dim2[i][to_draw]*scale_dim2); 	  
 //	float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],ofGetWidth(),ofGetWidth()/ratio);
   float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
-
+ if (!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {
+    ofxRPI4Window::shader.end();
+	float_img.getTexture().unbind();
+ }
 } else {
   img.clear();
 
@@ -496,11 +542,23 @@ if (ofxRPI4Window::avi_info.max_bpc == 10 && ofxRPI4Window::isHDR) {
   ofSetColor(255,255,255,255);
 
   img.update();
+ if (!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {
 
+    img.getTexture().bind();
+	ofxRPI4Window::shader.begin();
+    ofxRPI4Window::shader.setUniform1i("bits", ofxRPI4Window::bit_depth);
+    ofxRPI4Window::shader.setUniform1i("colorimetry", ofxRPI4Window::avi_info.colorimetry);
+	ofxRPI4Window::shader.setUniform1i("color_format", ofxRPI4Window::avi_info.output_format);
+	ofxRPI4Window::shader.setUniform1i("is_image", 1);
+
+ }
 
 //  img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw]*scale_dim1,arr_dim2[i][to_draw]*scale_dim2);
   img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
- 
+ if (!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {
+    ofxRPI4Window::shader.end();
+	img.getTexture().unbind();
+ }
 
 }
 
