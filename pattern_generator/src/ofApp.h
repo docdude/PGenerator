@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 Biasiotto Riccardo
+ * Copyright (c) 2017-2021 Biasiotto Riccardo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,10 +21,16 @@
 #pragma once
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+
+/* Start Include RPI p4 header file */
+#include "ofxRPI4Window.h"
+#define GL_RGB10_A2 0x8059
+#define GL_RGBA16F  0x881A
+#define GL_RGBA8    0x8058
+/* End Include RPI p4 header file */
 
 #include "ofMain.h"
-#include "ofxRPI4Window.h"
-//#include "ofxTinyEXR.h"
 
 class ofApp : public ofBaseApp{
  public:
@@ -35,16 +41,15 @@ class ofApp : public ofBaseApp{
   char tmp_dir[100]="/var/lib/PGenerator/";
   char text_font[100]="/var/lib/PGenerator/fonts/PGenerator.ttf";
   ofTrueTypeFont myfont;
-  ofFloatImage float_img;
   ofImage img;
-ofFbo fbo8;
-ofFbo fbo10;
-ofFbo fbo12_16; 
-ofShortPixels short_pixels;
-ofFloatPixels float_pixels;
-ofPixels pixels;
-  ofShader shader;
-    ofShader shader_print;
+
+  /* Start Patch For RPI 4 */
+  ofFloatImage float_img;
+  int arr_bits[2048][2048];
+  int bits;
+  int is_image;
+  /* End Patch For RPI 4 */
+
   string image_save;
   string movie_name;
   int sleep_time;
@@ -84,7 +89,6 @@ ofPixels pixels;
   int arr_dim2[2048][2048];
   int arr_posx[2048][2048];
   int arr_posy[2048][2048];
-  int arr_bits[2048][2048];
   unsigned long long arr_frame_time[2048];
   unsigned long long arr_frame_duration[2048];
   int dim1;
@@ -99,7 +103,6 @@ ofPixels pixels;
   int greenb;
   int blueb;
   int duration;
-  int bits;
   int frame;
   int n_draw[2048];
   int frame_to_draw;
@@ -113,9 +116,11 @@ ofPixels pixels;
   void text();
   void image();
   void set_values();
-	void image_local();
   void log(std::string);
- //
- int shader_init;
+  /* Start Patch For RPI 4 */
+  void setColor(int red, int green, int blue);
+  void setBackground(int redbg, int greenbg, int bluebg);
+  void shader_begin(int is_image);
+  void shader_end(int is_image);
+  /* End Patch For RPI 4 */
 };
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 Biasiotto Riccardo
+ * Copyright (c) 2017-2021 Biasiotto Riccardo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,10 @@
 */
 
 #include "ofApp.h"
+
+/* Start Patch RPI P4 */
 #include "rgb2ycbcr.h"
+/* End Patch RPI P4 */
 
 /*
  ##########################################################
@@ -28,45 +31,16 @@
 */
 void ofApp::setup(){
  ofSetBackgroundAuto(true); 
- if (ofxRPI4Window::avi_info.max_bpc == 8) {
-	if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
-		RGB data = RGB(arr_redbg[i][to_draw], arr_greenbg[i][to_draw], arr_bluebg[i][to_draw]);
-		YCbCr bg = RGB2YCbCr(data,8, ofxRPI4Window::avi_info.colorimetry);
-		if (ofxRPI4Window::avi_info.output_format == 1) {
-			ofBackground(bg.Cb,bg.Cr,bg.Y);  //YCbCr444, luminance is last
-		}
-		if (ofxRPI4Window::avi_info.output_format == 2) {
-			ofBackground(bg.Y,bg.Cb,bg.Cr);  //YCbCr422
-		}
-	} else {
-		ofBackground(def_r,def_g,def_b);
-	}
- } else {
-	if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
-		RGB data = RGB(arr_redbg[i][to_draw], arr_greenbg[i][to_draw], arr_bluebg[i][to_draw]);
-		YCbCr bg = RGB2YCbCr(data,10, ofxRPI4Window::avi_info.colorimetry);
-		if (ofxRPI4Window::avi_info.output_format == 1) {
-			of10bitBackground(bg.Cb,bg.Cr,bg.Y);  //YCbCr444, luminance is last
-		}
-		if (ofxRPI4Window::avi_info.output_format == 2) {
-			of10bitBackground(bg.Y,bg.Cb,bg.Cr);  //YCbCr422
-		}
-	} else {
-		of10bitBackground(def_r,def_g,def_b);
-	}
- }
+ /* Start Patch RPI P4 */
+ setBackground(def_r,def_g,def_b);
+ /* End Patch RPI P4 */
  ofHideCursor();
  /* Pid Creation */
  std::ofstream pidfile (pid_file);
  pidfile << getpid();
  pidfile.close();
-if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
-//	shader.load("rgb_limited_8bit");
-//ofxRPI4Window::rgb2ycbcr_shader();
-//	ofxRPI4Window::shader_init = 1;
 }
-}
-//ofxRPI4Window& shader_load();
+
 /*
  ##########################################################
  #                           Update                       #
@@ -96,13 +70,13 @@ void ofApp::update(){
    boost::split(el, str, boost::is_any_of("="));
    if(el[0] == "DRAW") {
     draw_type=el[1];
-	ofxRPI4Window::colorspace_on = 1;
-	if (ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1){// && !ofxRPI4Window::shader.isLoaded()) {
- 		ofxRPI4Window::rgb2ycbcr_shader();
-	//	shader.load("rgb2ycbcr");
-		ofxRPI4Window::shader_init=0;
-	}	
-
+    /* Start Patch RPI P4 */
+    ofxRPI4Window::colorspace_on = 1;
+    if (ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {
+     ofxRPI4Window::rgb2ycbcr_shader();
+     ofxRPI4Window::shader_init=0;
+    }
+    /* End Patch RPI P4 */
    }
    if(el[0] == "TEXT")
     text_to_write=el[1];
@@ -112,13 +86,14 @@ void ofApp::update(){
     m_name=el[1];
    if(el[0] == "IMAGE") {
     img_file=el[1];
-	ofxRPI4Window::colorspace_on=0;
-	if (ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1){// && !ofxRPI4Window::shader.isLoaded()) {
- 		ofxRPI4Window::rgb2ycbcr_shader();
-	//	shader.load("rgb2ycbcr");
-		ofxRPI4Window::shader_init=0;
-	}
-   } 
+    /* Start Patch RPI P4 */
+    ofxRPI4Window::colorspace_on=0;
+    if (ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {
+     ofxRPI4Window::rgb2ycbcr_shader();
+     ofxRPI4Window::shader_init=0;
+    }
+    /* End Patch RPI P4 */
+   }
    if(el[0] == "ROTATE")
     img_rotate=boost::lexical_cast<int>(el[1]);
    if(el[0] == "DIM") {
@@ -134,11 +109,13 @@ void ofApp::update(){
     green=boost::lexical_cast<int>(rgb[1]);
     blue=boost::lexical_cast<int>(rgb[2]);
    }
+   /* Start Patch RPI P4 */
    if(el[0] == "BITS") {
     bits=boost::lexical_cast<int>(el[1]);
-	ofxRPI4Window::bit_depth = bits;
-	ofxRPI4Window::colorspace_on=1;
+    ofxRPI4Window::bit_depth = bits;
+    ofxRPI4Window::colorspace_on=1;
    }
+   /* End Patch RPI P4 */
    if(el[0] == "POSITION") {
     boost::split(positions, el[1], boost::is_any_of(","));
     position_x=boost::lexical_cast<int>(positions[0]);
@@ -183,7 +160,6 @@ void ofApp::update(){
  ##########################################################
 */
 void ofApp::draw(){
-
  if(entered == 0)
   return;
  for(to_draw=0;to_draw<n_draw[i];to_draw++) {
@@ -197,7 +173,7 @@ void ofApp::draw(){
    save_images=0;
    unlink(return_file_char);
    return;
-  } 
+  }
   char buffer[255];
   sprintf(buffer,"Doing the frame %d and the Draw %d",i,to_draw);
   ofApp::log(buffer);
@@ -207,94 +183,27 @@ void ofApp::draw(){
   ofApp::log(buffer);
   sprintf(buffer,"DrawType: %d",arr_draw[i][to_draw]);
   ofApp::log(buffer);
+  if(arr_draw[i][to_draw] == 4) {
+   sprintf(buffer,"DrawImage: %s",arr_text[i][to_draw].c_str());
+   ofApp::log(buffer);
+  }
+  if(arr_draw[i][to_draw] == 5) {
+   sprintf(buffer,"DrawImage: %s",arr_image[i][to_draw].c_str());
+   ofApp::log(buffer);
+  }
   sprintf(buffer,"Dim: %d %d",arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
   ofApp::log(buffer);
   sprintf(buffer,"Resolution: %d",arr_resolution[i][to_draw]);
   ofApp::log(buffer);
   sprintf(buffer,"Position: %d %d",arr_posx[i][to_draw],arr_posy[i][to_draw]);
   ofApp::log(buffer);
+
   sprintf(buffer,"Bits: %d",arr_bits[i][to_draw]);
-  ofApp::log(buffer); 
-
-  if (ofxRPI4Window::isHDR && !ofxRPI4Window::isDoVi && !ofxRPI4Window::is_std_DoVi) { 
-	  if (ofxRPI4Window::bit_depth == 10) {  
-	     ofSet10bitColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
-		 if(arr_redbg[i][to_draw] != -1) {
-			if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
-				RGB data = RGB(arr_redbg[i][to_draw], arr_greenbg[i][to_draw], arr_bluebg[i][to_draw]);
-				YCbCr bg = RGB2YCbCr(data,10, ofxRPI4Window::avi_info.colorimetry);
-				if (ofxRPI4Window::avi_info.output_format == 1) {
-					of10bitBackground(bg.Cb,bg.Cr,bg.Y);  //in YCbCr444, luminance is last channel
-				}
-				if (ofxRPI4Window::avi_info.output_format == 2) {
-					of10bitBackground(bg.Y,bg.Cb,bg.Cr);  //in YCbCr422
-				}
-
-			} else {
-				of10bitBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
-			}
-		 }
- 
-	  } else {
-	     ofSetColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
-		 if(arr_redbg[i][to_draw] != -1) {
-			if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
-				RGB data = RGB(arr_redbg[i][to_draw], arr_greenbg[i][to_draw], arr_bluebg[i][to_draw]);
-				YCbCr bg = RGB2YCbCr(data,8,ofxRPI4Window::avi_info.colorimetry);
-				if (ofxRPI4Window::avi_info.output_format == 1) {
-					ofBackground(bg.Cb,bg.Cr,bg.Y);  //in YCbCr444, luminance is last channel
-				}
-				if (ofxRPI4Window::avi_info.output_format == 2) {
-					ofBackground(bg.Y,bg.Cb,bg.Cr);  //in YCbCr422
-				}
-
-			} else {
-				ofBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
-			}
-
-		 }
-	  }
-  } else {
-	  if (ofxRPI4Window::bit_depth == 10) {  
-	     ofSet10bitColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
-		 if(arr_redbg[i][to_draw] != -1) {
-			if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
-				RGB data = RGB(arr_redbg[i][to_draw], arr_greenbg[i][to_draw], arr_bluebg[i][to_draw]);
-				YCbCr bg = RGB2YCbCr(data,10, ofxRPI4Window::avi_info.colorimetry);
-				if (ofxRPI4Window::avi_info.output_format == 1) {
-					of10bitBackground(bg.Cb,bg.Cr,bg.Y);  //in YCbCr444, luminance is last channel
-				}
-				if (ofxRPI4Window::avi_info.output_format == 2) {
-					of10bitBackground(bg.Y,bg.Cb,bg.Cr);  //in YCbCr422
-				}
-
-			} else {
-				of10bitBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
-			}
-		 }
- 
-	  } else {
-	     ofSetColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
-		 if(arr_redbg[i][to_draw] != -1) {
-			if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
-				RGB data = RGB(arr_redbg[i][to_draw], arr_greenbg[i][to_draw], arr_bluebg[i][to_draw]);
-				YCbCr bg = RGB2YCbCr(data,8,ofxRPI4Window::avi_info.colorimetry);
-				if (ofxRPI4Window::avi_info.output_format == 1) {
-					ofBackground(bg.Cb,bg.Cr,bg.Y);  //in YCbCr444, luminance is last channel
-				}
-				if (ofxRPI4Window::avi_info.output_format == 2) {
-					ofBackground(bg.Y,bg.Cb,bg.Cr);  //in YCbCr422
-				}
-
-			} else {
-				ofBackground(arr_redbg[i][to_draw],arr_greenbg[i][to_draw],arr_bluebg[i][to_draw]);
-			}
-
-		 }
-	  }
-  }
-  
-
+  ofApp::log(buffer);
+  /* Start Patch RPI P4 */
+  ofApp::setColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]);
+  ofApp::setBackground(arr_redbg[i][to_draw], arr_greenbg[i][to_draw], arr_bluebg[i][to_draw]);
+  /* End Patch RPI P4 */
   if(arr_draw[i][to_draw] == 0)
    ::exit(0);
   if(arr_draw[i][to_draw] ==  1)
@@ -391,11 +300,14 @@ void ofApp::set_values () {
  arr_posx[frame][n_draw[frame]]=position_x;
  arr_posy[frame][n_draw[frame]]=position_y;
  arr_resolution[frame][n_draw[frame]]=resolution;
- arr_bits[frame][n_draw[frame]]=bits;
  arr_image[frame][n_draw[frame]]=img_file;
  arr_rotate[frame][n_draw[frame]]=img_rotate;
+ /* Start Patch RPI P4 */
+ arr_bits[frame][n_draw[frame]]=bits;
+ ofxRPI4Window::bit_depth=bits;
+ /* End Patch RPI P4 */
 }
- 
+
 /*
  ##########################################################
  #                       Rectangle                        #
@@ -405,30 +317,16 @@ void ofApp::rectangle () {
  if(arr_posx[i][to_draw] == -1) {
   arr_posx[i][to_draw]=(ofGetWindowWidth()-arr_dim1[i][to_draw])/2;
   arr_posy[i][to_draw]=(ofGetWindowHeight()-arr_dim2[i][to_draw])/2;
- } 
-//	glUseProgram(shader.getProgram());
- if (!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {
-	//ofShader  currentShader = static_cast<ofGLProgrammableRenderer*>(ofxRPI4Window::currentRenderer.get())->getCurrentShader();
-	//bool ok = currentShader.getProgram() == shader.getProgram();
-	//shader.getProgram();
-	ofxRPI4Window::shader.begin();
-    ofxRPI4Window::shader.setUniform1i("bits", ofxRPI4Window::bit_depth);
-    ofxRPI4Window::shader.setUniform1i("colorimetry", ofxRPI4Window::avi_info.colorimetry);
-	ofxRPI4Window::shader.setUniform1i("color_format", ofxRPI4Window::avi_info.output_format);
-	ofxRPI4Window::shader.setUniform1i("is_image", 0);
-	//shader.begin();
-	//shader.setUniform1i("bits", ofxRPI4Window::bit_depth);
-	//shader.setUniform1i("colorimetry", ofxRPI4Window::avi_info.colorimetry);
-	//shader.setUniform1i("color_format", ofxRPI4Window::avi_info.output_format);
-
  }
+ /* Start Patch RPI P4 */
+ ofApp::shader_begin(0); //set for draw = 0
+ /* End Patch RPI P4 */
  ofDrawRectangle(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
- if (!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {
-    ofxRPI4Window::shader.end();
-	//shader.end();
- }
+ /* Start Patch RPI P4 */
+ ofApp::shader_end(0); //set for draw = 0
+ /* End Patch RPI P4 */
 }
-
+ 
 /*
  ##########################################################
  #                       Circle                           #
@@ -464,7 +362,7 @@ void ofApp::triangle() {
 void ofApp::text() {
  myfont.load(text_font,arr_dim1[i][to_draw]);
  int width=myfont.stringWidth(arr_text[i][to_draw]);
- int height=myfont.stringHeight(arr_text[i][to_draw]);
+ //int height=myfont.stringHeight(arr_text[i][to_draw]);
  if(arr_posx[i][to_draw] == -1) {
   arr_posx[i][to_draw]=(ofGetWindowWidth()-width)/2;
   arr_posy[i][to_draw]=ofGetWindowHeight()/2;
@@ -477,92 +375,36 @@ void ofApp::text() {
  #                         Image                          #
  ##########################################################
 */
-
 void ofApp::image() {
-
- double scale_dim1 = (double)ofGetWindowWidth()/(double)arr_dim1[i][to_draw];
- double scale_dim2 = (double)ofGetWindowHeight()/(double)arr_dim2[i][to_draw];
- 
-// if(arr_posx[i][to_draw] == -1) {
- // arr_posx[i][to_draw]=(ofGetWindowWidth()-(arr_dim1[i][to_draw]*scale_dim1))/2;
- // arr_posy[i][to_draw]=(ofGetWindowHeight()-(arr_dim2[i][to_draw]*scale_dim2))/2;
-
-// }
  if(arr_posx[i][to_draw] == -1) {
   arr_posx[i][to_draw]=(ofGetWindowWidth()-arr_dim1[i][to_draw])/2;
   arr_posy[i][to_draw]=(ofGetWindowHeight()-arr_dim2[i][to_draw])/2;
  }
-
-
-if (ofxRPI4Window::avi_info.max_bpc == 10 && ofxRPI4Window::isHDR) {
+ /* Start Patch RPI P4 */
+ if (ofxRPI4Window::avi_info.max_bpc == 10 && ofxRPI4Window::isHDR) {
   float_img.clear();
-
   float_img.load(arr_image[i][to_draw]);
-  int width = float_img.getPixels().getWidth();
-  int height = float_img.getPixels().getHeight();
-  int channels = float_img.getPixels().getNumChannels();
-    
-  ofLogNotice("image specs") << "width " << width << " height " << height << " channels " << channels;
-  ofLogNotice("image specs2") << "x " << arr_posx[i][to_draw] << " y " << arr_posy[i][to_draw];
   float_img.rotate90(arr_rotate[i][to_draw]);
   ofSet10bitColor(1023,1023,1023,1023);
-  float ratio = float_img.getWidth()/float_img.getHeight();
-  ofLogNotice("scaled image specs") << "width " << ofGetWidth() << " height " << (ofGetWidth()/ratio) << " channels " << channels;
-
   float_img.update();
- if (!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {
-
-    float_img.getTexture().bind();
-	ofxRPI4Window::shader.begin();
-    ofxRPI4Window::shader.setUniform1i("bits", ofxRPI4Window::bit_depth);
-    ofxRPI4Window::shader.setUniform1i("colorimetry", ofxRPI4Window::avi_info.colorimetry);
-	ofxRPI4Window::shader.setUniform1i("color_format", ofxRPI4Window::avi_info.output_format);
-	ofxRPI4Window::shader.setUniform1i("is_image", 1);
-
- }
-//  float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw]*scale_dim1,arr_dim2[i][to_draw]*scale_dim2); 	  
-//	float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],ofGetWidth(),ofGetWidth()/ratio);
+  ofApp::shader_begin(1); //set for image = 1
   float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
- if (!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {
-    ofxRPI4Window::shader.end();
-	float_img.getTexture().unbind();
- }
-} else {
+  ofApp::shader_end(1); //set for image = 1
+ /* End Patch RPI P4 */
+ } else {
   img.clear();
-
   img.load(arr_image[i][to_draw]);
-  int width = img.getPixels().getWidth();
-  int height = img.getPixels().getHeight();
-  int channels = img.getPixels().getNumChannels();
-   
-  ofLogNotice("image specs") << "width " << width << " height " << height << " channels " << channels;
-  ofLogNotice("image specs2") << "x " << arr_posx[i][to_draw] << " y " << arr_posy[i][to_draw];
-
   img.rotate90(arr_rotate[i][to_draw]);
   ofSetColor(255,255,255,255);
-
   img.update();
- if (!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {
-
-    img.getTexture().bind();
-	ofxRPI4Window::shader.begin();
-    ofxRPI4Window::shader.setUniform1i("bits", ofxRPI4Window::bit_depth);
-    ofxRPI4Window::shader.setUniform1i("colorimetry", ofxRPI4Window::avi_info.colorimetry);
-	ofxRPI4Window::shader.setUniform1i("color_format", ofxRPI4Window::avi_info.output_format);
-	ofxRPI4Window::shader.setUniform1i("is_image", 1);
-
- }
-
-//  img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw]*scale_dim1,arr_dim2[i][to_draw]*scale_dim2);
+  /* Start Patch RPI P4 */
+  ofApp::shader_begin(1); //set for image = 1
+  /* End Patch RPI P4 */
   img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
- if (!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {
-    ofxRPI4Window::shader.end();
-	img.getTexture().unbind();
+  /* Start Patch RPI P4 */
+  ofApp::shader_end(1); //set for image = 1
+  /* End Patch RPI P4 */
  }
-
-}
-
- 
 }
 
 /*
@@ -579,6 +421,97 @@ void ofApp::log(std::string str) {
    f.close();
    return;
   }   
-  std::cout << str << std::endl;
+  std::cout << "[" << boost::posix_time::microsec_clock::local_time().time_of_day().total_milliseconds() << "]: " << str << std::endl;
 }
 
+/*
+ ##########################################################
+ #                   Set Background                       #
+ ##########################################################
+*/
+void ofApp::setBackground(int redbg, int greenbg, int bluebg) {
+ if (ofxRPI4Window::isHDR && !ofxRPI4Window::isDoVi && !ofxRPI4Window::is_std_DoVi) { 
+  if (ofxRPI4Window::bit_depth == 10) {  
+   if(arr_redbg[i][to_draw] != -1) {
+    if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
+     RGB data = RGB(redbg,greenbg,bluebg);
+     YCbCr bg = RGB2YCbCr(data,10, ofxRPI4Window::avi_info.colorimetry);
+     if (ofxRPI4Window::avi_info.output_format == 1) of10bitBackground(bg.Cb,bg.Cr,bg.Y);  //in YCbCr444, luminance is last channel
+     if (ofxRPI4Window::avi_info.output_format == 2) of10bitBackground(bg.Y,bg.Cb,bg.Cr);  //in YCbCr422
+    } else                                           of10bitBackground(redbg,greenbg,bluebg);
+   }
+  } else {
+   if(arr_redbg[i][to_draw] != -1) {
+    if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
+     RGB data = RGB(redbg,greenbg,bluebg);
+     YCbCr bg = RGB2YCbCr(data,8,ofxRPI4Window::avi_info.colorimetry);
+     if (ofxRPI4Window::avi_info.output_format == 1) ofBackground(bg.Cb,bg.Cr,bg.Y);  //in YCbCr444, luminance is last channel
+     if (ofxRPI4Window::avi_info.output_format == 2) ofBackground(bg.Y,bg.Cb,bg.Cr);  //in YCbCr422
+    } else                                           ofBackground(redbg,greenbg,bluebg);
+   }
+  }
+ } else {
+  if (ofxRPI4Window::bit_depth == 10) {  
+   if(arr_redbg[i][to_draw] != -1) {
+    if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
+     RGB data = RGB(redbg,greenbg,bluebg);
+     YCbCr bg = RGB2YCbCr(data,10, ofxRPI4Window::avi_info.colorimetry);
+     if (ofxRPI4Window::avi_info.output_format == 1) of10bitBackground(bg.Cb,bg.Cr,bg.Y);  //in YCbCr444, luminance is last channel
+     if (ofxRPI4Window::avi_info.output_format == 2) of10bitBackground(bg.Y,bg.Cb,bg.Cr);  //in YCbCr422
+    } else                                           of10bitBackground(redbg,greenbg,bluebg);
+   }
+  } else {
+   if(arr_redbg[i][to_draw] != -1) {
+    if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
+     RGB data = RGB(redbg,greenbg,bluebg);
+     YCbCr bg = RGB2YCbCr(data,8,ofxRPI4Window::avi_info.colorimetry);
+     if (ofxRPI4Window::avi_info.output_format == 1) ofBackground(bg.Cb,bg.Cr,bg.Y);  //in YCbCr444, luminance is last channel
+     if (ofxRPI4Window::avi_info.output_format == 2) ofBackground(bg.Y,bg.Cb,bg.Cr);  //in YCbCr422
+    } else                                           ofBackground(redbg,greenbg,bluebg);
+   }
+  }
+ }
+}
+
+/*
+ ##########################################################
+ #                     Set Color                          #
+ ##########################################################
+*/
+void ofApp::setColor(int red, int green, int blue) {
+ if (ofxRPI4Window::isHDR && !ofxRPI4Window::isDoVi && !ofxRPI4Window::is_std_DoVi) { 
+  if (ofxRPI4Window::bit_depth == 10) ofSet10bitColor(red,green,blue);
+  else                                ofSetColor(red,green,blue);
+ } else {
+  if (ofxRPI4Window::bit_depth == 10) ofSet10bitColor(red,green,blue);
+  else                                ofSetColor(red,green,blue);
+ }
+}
+
+/*
+ ##########################################################
+ #                       Shader Begin                     #
+ ##########################################################
+*/
+void ofApp::shader_begin(int is_image) {
+ if (!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {
+  if (is_image) float_img.getTexture().bind();
+  ofxRPI4Window::shader.begin();
+  ofxRPI4Window::shader.setUniform1i("bits", ofxRPI4Window::bit_depth);
+  ofxRPI4Window::shader.setUniform1i("colorimetry", ofxRPI4Window::avi_info.colorimetry);
+  ofxRPI4Window::shader.setUniform1i("color_format", ofxRPI4Window::avi_info.output_format);
+  ofxRPI4Window::shader.setUniform1i("is_image", is_image);
+ }		
+}
+
+/*
+ ##########################################################
+ #                        Shader End                      #
+ ##########################################################
+*/
+void ofApp::shader_end(int is_image) {
+ if (!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.rgb_quant_range == 1) {
+  ofxRPI4Window::shader.end();
+  if (is_image) float_img.getTexture().unbind();
+ }		
+}
