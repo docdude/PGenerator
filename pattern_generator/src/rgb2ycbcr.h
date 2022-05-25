@@ -65,14 +65,19 @@ public:
 	}
 };
 
-static YCbCr RGB2YCbCr(RGB rgb, int bits, int colorimetry) {
+static YCbCr RGB2YCbCr(RGB rgb, int bits, int colorimetry, int rgb_quant_range) {
 	float coeffs[2][3] =
 	{
 	{ 0.2126, 0.7152, 0.0722}, 
 	{ 0.2627, 0.6780, 0.0593}, 
 	};
-	int scalar1 = 224 << (bits - 8);
-	int scalar2 = 219 << (bits - 8);
+	/* Full range 0-255: 256/255, Studio range: 256/219, Limited range: 224/219 */
+	int scalar1;
+	int scalar2;
+	int scalar_limit1 = 224 << (bits - 8);
+	int scalar_limit2 = 219 << (bits - 8);
+	int scalar_full1 = 256 << (bits - 8);
+	int scalar_full2 = 255 << (bits - 8);
 	int offset = 128 << (bits - 8);
 	int R, G, B;
 	int idx;
@@ -91,6 +96,14 @@ static YCbCr RGB2YCbCr(RGB rgb, int bits, int colorimetry) {
 //		G = G * 0.856305 + 64;
 //		B = B * 0.856305 + 64;
 //	}	
+	if (rgb_quant_range == 1) {
+		scalar1=scalar_limit1;
+		scalar2=scalar_limit2;
+	}
+	if (rgb_quant_range == 2) {
+		scalar1=scalar_full1;
+		scalar2=scalar_full2;
+	}
 	if (colorimetry == 2) {
 		idx = 0;
 		d = 1.8556;
@@ -108,13 +121,43 @@ static YCbCr RGB2YCbCr(RGB rgb, int bits, int colorimetry) {
 	return YCbCr(Y, Cb, Cr); 
 }
 
-static YCbCr RGB2YCbCr_2020(RGB rgb, int bits) {
-	int scalar1 = 224 << (bits - 8);
-	int scalar2 = 219 << (bits - 8);
+static RGB YCbCrToRGB(YCbCr ycbcr, int bits, int colorimetry, int rgb_quant_range) {
+	float coeffs[2][3] =
+	{
+	{ 0.2126, 0.7152, 0.0722}, 
+	{ 0.2627, 0.6780, 0.0593}, 
+	};
+	/* Full range 0-255: 256/255, Studio range: 256/219, Limited range: 224/219 */
+	int scalar1;
+	int scalar2;
+	int scalar_limit1 = 224 << (bits - 8);
+	int scalar_limit2 = 219 << (bits - 8);
+	int scalar_full1 = 256 << (bits - 8);
+	int scalar_full2 = 255 << (bits - 8);
 	int offset = 128 << (bits - 8);
-	int Y = (0.2627 * rgb.R + 0.6780 * rgb.G + 0.0593 * rgb.B);
-	int Cb = ((-0.2627/1.8814) * rgb.R - (0.6780/1.8814) * rgb.G + (0.9278/1.814) * rgb.B)*scalar1/scalar2 + offset; // Chrominance Blue
-	int Cr = ((0.7373/1.4746) * rgb.R - (0.6780/1.4746) * rgb.G - (0.0593/1.4746) * rgb.B)*scalar1/scalar2 + offset; // Chrominance Red
+	int idx;
+	float d, e;
+	if (rgb_quant_range == 1) {
+		scalar1=scalar_limit1;
+		scalar2=scalar_limit2;
+	}
+	if (rgb_quant_range == 2) {
+		scalar1=scalar_full1;
+		scalar2=scalar_full2;
+	}
+	if (colorimetry == 2) {
+		idx = 0;
+		d = 1.8556;
+		e = 1.5748;
+	}	
+	if (colorimetry == 9) {
+		idx = 1;
+		d = 1.8814;
+		e = 1.4746;
+	}	
+	float r = ycbcr.Y + (ycbcr.Cr - offset) * scalar2/scalar1 * e;
+	float g = ycbcr.Y + (ycbcr.Cb - offset) * scalar2/scalar1 * -coeffs[idx][2]*d/coeffs[idx][1] + (ycbcr.Cr - offset) * scalar2/scalar1 * -coeffs[idx][0]*e/coeffs[idx][1];
+	float b = ycbcr.Y + (ycbcr.Cb - offset) * scalar2/scalar1 * d;
 
-	return YCbCr(Y, Cb, Cr); 
+	return RGB((int)r, (int)g, (int)b);
 }

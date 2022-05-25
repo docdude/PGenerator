@@ -1,2 +1,2 @@
 ofxRPI4Window
-ofxTinyEXR
+#ofxTinyEXR

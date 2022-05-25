@@ -25,6 +25,7 @@
 
 /* Start Include RPI p4 header file */
 #include "ofxRPI4Window.h"
+#define GL_RGB10 0x8052
 #define GL_RGB10_A2 0x8059
 #define GL_RGBA16F  0x881A
 #define GL_RGBA8    0x8058
@@ -42,9 +43,12 @@ class ofApp : public ofBaseApp{
   char text_font[100]="/var/lib/PGenerator/fonts/PGenerator.ttf";
   ofTrueTypeFont myfont;
   ofImage img;
-
+ofShader shader;
   /* Start Patch For RPI 4 */
   ofFloatImage float_img;
+  ofShortImage short_img;
+  ofFbo fbo8;
+  ofFbo fbo10;
   int arr_bits[2048][2048];
   int bits;
   int is_image;
@@ -120,7 +124,14 @@ class ofApp : public ofBaseApp{
   /* Start Patch For RPI 4 */
   void setColor(int red, int green, int blue);
   void setBackground(int redbg, int greenbg, int bluebg);
+  void setDoViBackground(int redbg, int greenbg, int bluebg);
   void shader_begin(int is_image);
   void shader_end(int is_image);
+  void YCbCr2RGB();
+  void dovi_rpu_inject();
+  void dovi_metadata_inject(int bit_depth);
+unsigned int crc32mpeg(unsigned char *message, size_t l);
+  void dovi_dump();
+  void fbo_allocate();
   /* End Patch For RPI 4 */
 };
