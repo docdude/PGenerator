@@ -350,7 +350,7 @@ void ofApp::rectangle () {
  }
 // ofApp::shader_begin(0);
  ofDrawRectangle(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
-// ofApp::shader_end(0);
+ //ofApp::shader_end(0);
 // if (ofxRPI4Window::bit_depth == 10) { 
  //    float_img.grabScreen(0,0,ofGetWindowWidth(),ofGetWindowHeight());
 //	ofApp::YCbCr2RGB();
@@ -829,9 +829,9 @@ fbo10.readToPixels(short_pix);
 		} else {
 		//	img.clear(); 
 		//	img.grabScreen(0,0,ofGetWindowWidth(),ofGetWindowHeight());
-		//	pix.allocate(ofGetWindowWidth(), ofGetWindowHeight(), OF_IMAGE_COLOR_ALPHA);
+	//		pix.allocate(ofGetWindowWidth(), ofGetWindowHeight(), OF_IMAGE_COLOR_ALPHA);
 
-fbo8.readToPixels(pix);
+fbo8.readToPixels(pix); 
 			pixels = pix.getData();//img.getPixels().getData();
 			//Calculate number of pixel components
 			width = pix.getWidth();//img.getPixels().getWidth();
@@ -1028,7 +1028,7 @@ fbo8.readToPixels(pix);
 			if (cycles == 3) break; 
 		}
 		if (bit_depth == 10) {
-
+			short_img.clear();
 			ofSet10bitColor(1023,1023,1023,1023); 
 			short_img.allocate(ofGetWindowWidth(),ofGetWindowHeight(), OF_IMAGE_COLOR_ALPHA);
 			short_img.setFromPixels(short_pix);
@@ -1040,6 +1040,7 @@ fbo8.readToPixels(pix);
 			}
 
 		} else {
+			img.clear();
 
 			ofSetColor(255,255,255,255);
 			img.allocate(ofGetWindowWidth(),ofGetWindowHeight(), OF_IMAGE_COLOR_ALPHA);
@@ -1163,7 +1164,7 @@ void ofApp::setDoViBackground(int redbg, int greenbg, int bluebg) {
 */
 void ofApp::fbo_allocate() {
 	if (ofxRPI4Window::is_std_DoVi && ofxRPI4Window::bit_depth == 10) {  
-//  fbo10.clear();
+  fbo10.clear();
 
 		fbo10.allocate(ofGetWindowWidth(),ofGetWindowHeight(), GL_RGB10_A2);
 		fbo10.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
@@ -1173,7 +1174,7 @@ void ofApp::fbo_allocate() {
    } 
    if (ofxRPI4Window::is_std_DoVi && ofxRPI4Window::bit_depth == 8) {  
    
-
+fbo8.clear();
 
 		fbo8.allocate(ofGetWindowWidth(),ofGetWindowHeight(), GL_RGBA);
 		fbo8.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
