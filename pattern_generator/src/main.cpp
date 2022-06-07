@@ -45,6 +45,8 @@ std::string min_luma="1";
 std::string max_bpc="8";
 std::string mode_idx="-1";
 std::string dv_metadata="0";
+std::string dv_status="0";
+std::string dv_interface="0";
 /* Include RPI p4 header file */
 #include "ofxRPI4Window.h"
 // End Patch RPI p4
@@ -83,7 +85,7 @@ int main(int argc, char **argv){
   w=atoi(argv[1]);
   h=atoi(argv[2]);
  }
- ofLog() << "PGenerator version " << pgenCodeVersion;
+ //ofLog() << "PGenerator version " << pgenCodeVersion;
  if (str.find("Raspberry Pi 4") == string::npos) {
   ofSetupOpenGL(w,h, OF_FULLSCREEN);
   ofRunApp( new ofApp());
@@ -108,7 +110,9 @@ int main(int argc, char **argv){
    if(el[0] == "is_std_dovi")     is_std_dovi=el[1];
    if(el[0] == "primaries")       primaries=el[1];
    if(el[0] == "mode_idx")        mode_idx=el[1];
-   if(el[0] == "dv_metadata")       dv_metadata=el[1];
+   if(el[0] == "dv_metadata")     dv_metadata=el[1];
+   if(el[0] == "dv_status")       dv_status=el[1];
+   if(el[0] == "dv_interface")    dv_interface=el[1];
   }
   file.close();
 
@@ -128,6 +132,8 @@ int main(int argc, char **argv){
   ofxRPI4Window::avi_info.max_bpc=atoi(max_bpc.c_str());
   ofxRPI4Window::mode_idx=atoi(mode_idx.c_str());
   ofxRPI4Window::dv_metadata=atoi(dv_metadata.c_str());
+  ofxRPI4Window::dv_status=atoi(dv_status.c_str());
+  ofxRPI4Window::dv_interface=atoi(dv_interface.c_str());
   /* RPI4 Run App */
   ofGLESWindowSettings settings;
   settings.glesVersion = 3;

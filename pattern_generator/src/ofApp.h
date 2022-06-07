@@ -43,7 +43,7 @@ class ofApp : public ofBaseApp{
   char text_font[100]="/var/lib/PGenerator/fonts/PGenerator.ttf";
   ofTrueTypeFont myfont;
   ofImage img;
-ofShader shader;
+  ofShader shader;
   /* Start Patch For RPI 4 */
   ofFloatImage float_img;
   ofShortImage short_img;
