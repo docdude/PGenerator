@@ -301,6 +301,9 @@ void ofApp::draw(){
    first_done=0;
   }
  }
+// prev_rgbr= arr_red[i][to_draw];
+// prev_rgbg= arr_green[i][to_draw];
+ // prev_rgbb=arr_blue[i][to_draw];
 }
 
 
@@ -813,6 +816,8 @@ void ofApp::dovi_metadata_inject(int bit_depth) {
 		ofPixels pix;
 		ofShortImage short_img;
 		ofImage img;
+			  	pix.clear();
+	 		img.clear();
 		//Getting pointer to pixel array of image
 		if (bit_depth == 10) {
 	//		short_pix.allocate(ofGetWindowWidth(), ofGetWindowHeight(), OF_IMAGE_COLOR_ALPHA);
@@ -955,7 +960,7 @@ fbo8.readToPixels(pix);
 				j = CHAR_BIT-1;
 
 			}
-			printf("Total number of Ver bits %d\n",num_bits);
+//			printf("Total number of Ver bits %d\n",num_bits);
 		}
 		/* Inject DoVi RPU Display Management Data */
 		int z=0;
@@ -1028,31 +1033,39 @@ fbo8.readToPixels(pix);
 			if (cycles == 3) break; 
 		}
 		if (bit_depth == 10) {
-			short_img.clear();
+			//short_img.clear();
 			ofSet10bitColor(1023,1023,1023,1023); 
-			short_img.allocate(ofGetWindowWidth(),ofGetWindowHeight(), OF_IMAGE_COLOR_ALPHA);
+		//	short_img.allocate(ofGetWindowWidth(),ofGetWindowHeight(), OF_IMAGE_COLOR_ALPHA);
 			short_img.setFromPixels(short_pix);
 		//	short_img.save("/tmp/test.png");
 			ofDisableTextureEdgeHack();
 			short_img.getTexture().setTextureMinMagFilter(GL_NEAREST,GL_NEAREST);
 			if( short_img.isAllocated() ){ 
 				short_img.draw(0,0,ofGetWindowWidth(),ofGetWindowHeight());
+			//	dovi_img.push_back(short_img);
 			}
-
+	  	short_pix.clear();
+		short_img.clear();
 		} else {
-			img.clear();
-
+			
+	
 			ofSetColor(255,255,255,255);
-			img.allocate(ofGetWindowWidth(),ofGetWindowHeight(), OF_IMAGE_COLOR_ALPHA);
+		//	img.allocate(ofGetWindowWidth(),ofGetWindowHeight(), OF_IMAGE_COLOR_ALPHA);
 			img.setFromPixels(pix);
+		
 			ofDisableTextureEdgeHack();
 			img.getTexture().setTextureMinMagFilter(GL_NEAREST,GL_NEAREST);
 			if( img.isAllocated() ){
 				img.draw(0,0,ofGetWindowWidth(),ofGetWindowHeight());
-			} 
+							//	dovi_img.push_back(img);
+							//	dovi_img.clear();
+			//					        if(dovi_img.size()>0){      
+           // dovi_img.erase(dovi_img.begin());  
+      //  } 
 
+			} 
 		}
-ofApp::crc32mpeg(cal5_422,124);
+//ofApp::crc32mpeg(cal5_422,124);
 }
 
 void ofApp::dovi_dump() {

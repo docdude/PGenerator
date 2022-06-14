@@ -47,6 +47,7 @@ class ofApp : public ofBaseApp{
   /* Start Patch For RPI 4 */
   ofFloatImage float_img;
   ofShortImage short_img;
+  vector <ofImage> dovi_img;
   ofFbo fbo8;
   ofFbo fbo10;
   int arr_bits[2048][2048];
