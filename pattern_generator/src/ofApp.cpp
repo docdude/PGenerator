@@ -510,7 +510,8 @@ void ofApp::image() {
 //	ofApp::YCbCr2RGB();
 //	dovi_rpu_inject();
 //ofApp::dovi_dump();
-
+			ofDisableTextureEdgeHack();
+img.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
  img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
 //ofApp::dovi_metadata_inject(ofxRPI4Window::bit_depth);
 	//img.save("/tmp/test.png");
@@ -578,20 +579,20 @@ void ofApp::setBackground(int redbg, int greenbg, int bluebg) {
     if (ofxRPI4Window::avi_info.output_format != 0 || ofxRPI4Window::is_std_DoVi) {
      RGB data = RGB(redbg,greenbg,bluebg);
      YCbCr bg = RGB2YCbCr(data,10, ofxRPI4Window::avi_info.colorimetry, ofxRPI4Window::avi_info.rgb_quant_range);
-     if (ofxRPI4Window::avi_info.output_format == 1) of10bitBackground(bg.Cb,bg.Cr,bg.Y);  //in YCbCr444, luminance is last channel
-     if (ofxRPI4Window::avi_info.output_format == 2) of10bitBackground(bg.Y,bg.Cb,bg.Cr);  //in YCbCr422
-	 if (ofxRPI4Window::is_std_DoVi == 1) 			 ofApp::setDoViBackground(redbg,greenbg,bluebg);	
-    } else                                           of10bitBackground(redbg,greenbg,bluebg);
+     if (ofxRPI4Window::avi_info.output_format == 1) 					of10bitBackground(bg.Cb,bg.Cr,bg.Y);  //in YCbCr444, luminance is last channel
+     if (ofxRPI4Window::avi_info.output_format == 2) 					of10bitBackground(bg.Y,bg.Cb,bg.Cr);  //in YCbCr422
+	 if (ofxRPI4Window::is_std_DoVi && ofxRPI4Window::colorspace_on)	ofApp::setDoViBackground(redbg,greenbg,bluebg); //set dovi background only if standard dovi mode and drawing patterns
+    } else                                           					of10bitBackground(redbg,greenbg,bluebg);
    }
   } else {
    if(arr_redbg[i][to_draw] != -1) {
     if (ofxRPI4Window::avi_info.output_format != 0 || ofxRPI4Window::is_std_DoVi) {
      RGB data = RGB(redbg,greenbg,bluebg);
      YCbCr bg = RGB2YCbCr(data,8,ofxRPI4Window::avi_info.colorimetry, ofxRPI4Window::avi_info.rgb_quant_range);
-     if (ofxRPI4Window::avi_info.output_format == 1) ofBackground(bg.Cb,bg.Cr,bg.Y);  //in YCbCr444, luminance is last channel
-     if (ofxRPI4Window::avi_info.output_format == 2) ofBackground(bg.Y,bg.Cb,bg.Cr);  //in YCbCr422
-	 if (ofxRPI4Window::is_std_DoVi == 1) 			 ofApp::setDoViBackground(redbg,greenbg,bluebg);
-    } else                                           ofBackground(redbg,greenbg,bluebg);
+     if (ofxRPI4Window::avi_info.output_format == 1)					ofBackground(bg.Cb,bg.Cr,bg.Y);  //in YCbCr444, luminance is last channel
+     if (ofxRPI4Window::avi_info.output_format == 2) 					ofBackground(bg.Y,bg.Cb,bg.Cr);  //in YCbCr422
+	 if (ofxRPI4Window::is_std_DoVi && ofxRPI4Window::colorspace_on) 	ofApp::setDoViBackground(redbg,greenbg,bluebg);  //set dovi background only if standard dovi mode and drawing patterns
+    } else                                          					ofBackground(redbg,greenbg,bluebg);
    }
   }
  }
@@ -619,7 +620,7 @@ void ofApp::setColor(int red, int green, int blue) {
 */
 void ofApp::shader_begin(int is_image) {
  if ((!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.output_format != 0) || (!ofxRPI4Window::shader_init && ofxRPI4Window::is_std_DoVi)) {
-  if (is_image) {
+  if (is_image) { 
 	if (ofxRPI4Window::avi_info.max_bpc == 10 && ofxRPI4Window::isHDR) float_img.getTexture().bind();
 	else 															         img.getTexture().bind();
   }
@@ -632,7 +633,7 @@ void ofApp::shader_begin(int is_image) {
   ofxRPI4Window::shader.setUniform1i("rgb_quant_range", ofxRPI4Window::avi_info.rgb_quant_range);
   ofxRPI4Window::shader.setUniform1i("is_image", is_image);
   ofxRPI4Window::shader.setUniform1i("is_std_DoVi", ofxRPI4Window::is_std_DoVi);
-
+  ofxRPI4Window::shader.setUniform2f("resolution", ofGetWindowWidth(), ofGetWindowHeight());
  }		
 }
 
@@ -825,7 +826,7 @@ void ofApp::dovi_metadata_inject(int bit_depth) {
 
 		//	float_img.grabScreen(0,0,ofGetWindowWidth(),ofGetWindowHeight());
 
-fbo10.readToPixels(short_pix);
+			fbo10.readToPixels(short_pix);
 			short_pixels = short_pix.getData();//float_img.getPixels().getData();
 			//Calculate number of pixel components
 			width = short_pix.getWidth();//float_img.getPixels().getWidth();
@@ -836,7 +837,7 @@ fbo10.readToPixels(short_pix);
 		//	img.grabScreen(0,0,ofGetWindowWidth(),ofGetWindowHeight());
 	//		pix.allocate(ofGetWindowWidth(), ofGetWindowHeight(), OF_IMAGE_COLOR_ALPHA);
 
-fbo8.readToPixels(pix); 
+			fbo8.readToPixels(pix); 
 			pixels = pix.getData();//img.getPixels().getData();
 			//Calculate number of pixel components
 			width = pix.getWidth();//img.getPixels().getWidth();
@@ -906,6 +907,29 @@ fbo8.readToPixels(pix);
 								  0x01, 0x00, 0x02, 0x0d, 0x37, 0x03, 0x33, 0x00, 0x00, 0x00, 0x06, 0xff, 0x02, 0x00, 0x00, 0x00,
 								  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 								  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf1, 0xc6, 0x14, 0x00 };
+								  
+		/* Profile 8.2, 3 extra metadata blocks, different level 1 pq */					  
+		unsigned char cal_murideo[] = {0x00, 0x00, 0x00, 0x00, 0x66, 0x00, 0x00, 0x25, 0x66, 0x00, 0x00, 0x39, 0x93, 0x25, 0x66, 0xf9, 0x27,
+								0xee, 0xe2, 0x25, 0x66, 0x43, 0xd9, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x08,
+								0x00, 0x00, 0x00, 0x16, 0xd5, 0x25, 0xe6, 0x03, 0x45, 0x0a, 0x08, 0x2f, 0xe0, 0x06, 0x19, 0x00, 0x00, 
+								0x02, 0xa7, 0x3d, 0x59, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x01, 
+								0x01, 0x00, 0x00, 0x0f, 0xff, 0x00, 0x2a, 0x03, 0x00, 0x00, 0x00, 0x06, 0x01, 0x00, 0x00, 0x0f, 0xff, 
+								0x05, 0x55, 0x00, 0x00, 0x00, 0x04, 0x04, 0x0f, 0xff, 0x0f, 0xff, 0x00, 0x00, 0x00, 0x06, 0xff, 0x02, 
+								0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+								0x00, 0x00, 0x00, 0x00, 0x00, 0x1d, 0x4f, 0xef, 0x89};
+
+								
+		unsigned char ver_murideo[] = {00, 0x00, 0x00, 0x00, 0x66, 0x00, 0x00, 0x25, 0x66, 0x00, 0x00, 0x39, 0x93, 0x25, 0x66, 0xf9, 
+								0x27, 0xee, 0xe2, 0x25, 0x66, 0x43, 0xd9, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 
+								0x08, 0x00, 0x00, 0x00, 0x16, 0xd5, 0x25, 0xe6, 0x03, 0x45, 0x0a, 0x08, 0x2f, 0xe0, 0x06, 0x19, 0x00, 
+								0x00, 0x02, 0xa7, 0x3d, 0x59, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0x00, 
+								0x01, 0x01, 0x00, 0x00, 0x0f, 0xff, 0x00, 0x2a, 0x03, 0x00, 0x00, 0x00, 0x06, 0x01, 0x00, 0x00, 0x0f, 
+								0xff, 0x05, 0x55, 0x00, 0x00, 0x00, 0x04, 0x04, 0x0f, 0xff, 0x0f, 0xff, 0x00, 0x00, 0x00, 0x06, 0xff, 
+								0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+								0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x17, 0x9b, 0x95, 0xf9};
+
+
+
 
 		unsigned char mask = 1; // Bit mask
 		unsigned char bits[8];
@@ -918,8 +942,11 @@ fbo8.readToPixels(pix);
 		int n = sizeof(cal)/sizeof(cal[0]);
 		
 		if (ofxRPI4Window::avi_info.colorimetry == 2) {
-			memcpy(cal, cal8_2, sizeof(cal)); 
-			memcpy(ver, ver8_2, sizeof(ver));
+		//	memcpy(cal, cal8_2, sizeof(cal)); 
+		//	memcpy(ver, ver8_2, sizeof(ver));
+			memcpy(cal, cal_murideo, sizeof(cal)); 
+			memcpy(ver, ver_murideo, sizeof(ver));
+
 		}
 		if (ofxRPI4Window::avi_info.colorimetry == 9) {
 			memcpy(cal, cal8_1, sizeof(cal));

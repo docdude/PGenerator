@@ -52,7 +52,6 @@ class ofApp : public ofBaseApp{
   ofFbo fbo10;
   int arr_bits[2048][2048];
   int bits;
-  int is_image;
   /* End Patch For RPI 4 */
 
   string image_save;
