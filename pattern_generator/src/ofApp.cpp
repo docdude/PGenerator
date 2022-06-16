@@ -942,10 +942,10 @@ void ofApp::dovi_metadata_inject(int bit_depth) {
 		int n = sizeof(cal)/sizeof(cal[0]);
 		
 		if (ofxRPI4Window::avi_info.colorimetry == 2) {
-		//	memcpy(cal, cal8_2, sizeof(cal)); 
-		//	memcpy(ver, ver8_2, sizeof(ver));
-			memcpy(cal, cal_murideo, sizeof(cal)); 
-			memcpy(ver, ver_murideo, sizeof(ver));
+			memcpy(cal, cal8_2, sizeof(cal)); 
+			memcpy(ver, ver8_2, sizeof(ver));
+		//	memcpy(cal, cal_murideo, sizeof(cal)); 
+		//	memcpy(ver, ver_murideo, sizeof(ver));
 
 		}
 		if (ofxRPI4Window::avi_info.colorimetry == 9) {
