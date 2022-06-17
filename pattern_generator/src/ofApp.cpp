@@ -72,13 +72,15 @@ void ofApp::update(){
    if(el[0] == "DRAW") {
     draw_type=el[1];
     /* Start Patch RPI P4 */
-    ofxRPI4Window::colorspace_on = 1;
-		    
-    if ((ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.output_format != 0) || (ofxRPI4Window::shader_init && ofxRPI4Window::is_std_DoVi)) {
-     ofxRPI4Window::rgb2ycbcr_shader();
-     ofxRPI4Window::shader_init=0;
-
-    }
+ //   ofxRPI4Window::colorspace_on = 1;	    
+ //   if (ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.output_format != 0) {
+ //    ofxRPI4Window::rgb2ycbcr_shader();
+ //    ofxRPI4Window::shader_init=0;
+ //   }
+//	if (ofxRPI4Window::shader_init && ofxRPI4Window::is_std_DoVi) {
+ //    ofxRPI4Window::dovi_pattern_shader();
+//	 ofxRPI4Window::shader_init=0;
+ //   }
     /* End Patch RPI P4 */
    }
    if(el[0] == "TEXT")
@@ -90,12 +92,15 @@ void ofApp::update(){
    if(el[0] == "IMAGE") {
     img_file=el[1];
     /* Start Patch RPI P4 */
-    ofxRPI4Window::colorspace_on=0;
-//	shader.load("dovi_enc");
-    if ((ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.output_format != 0) || (ofxRPI4Window::shader_init && ofxRPI4Window::is_std_DoVi)) {
-     ofxRPI4Window::rgb2ycbcr_shader();
-     ofxRPI4Window::shader_init=0;
-    }
+ //   ofxRPI4Window::colorspace_on=0;
+ //   if (ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.output_format != 0) {
+ //    ofxRPI4Window::rgb2ycbcr_shader();
+ //    ofxRPI4Window::shader_init=0;
+ //   }
+//	if (ofxRPI4Window::shader_init && ofxRPI4Window::is_std_DoVi) {
+//	 ofxRPI4Window::dovi_image_shader();
+//	 ofxRPI4Window::shader_init=0;
+ //   }
     /* End Patch RPI P4 */
 	 
    }
@@ -119,7 +124,7 @@ void ofApp::update(){
     bits=boost::lexical_cast<int>(el[1]);
     ofxRPI4Window::bit_depth = bits;
     ofxRPI4Window::avi_info.max_bpc = bits;
-    ofxRPI4Window::colorspace_on=1;
+ //   ofxRPI4Window::colorspace_on=1;
    }
    /* End Patch RPI P4 */
    if(el[0] == "POSITION") {
@@ -150,6 +155,19 @@ void ofApp::update(){
     dim1=dim2=0;
    }
   }
+  /* Start Patch RPI P4 */
+  if (draw_type == "IMAGE") ofxRPI4Window::colorspace_on = 0;
+  else 		                ofxRPI4Window::colorspace_on = 1;
+  if (ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.output_format != 0) {
+   ofxRPI4Window::rgb2ycbcr_shader();
+   ofxRPI4Window::shader_init=0;
+  }
+  if (ofxRPI4Window::shader_init && ofxRPI4Window::is_std_DoVi) {
+   if (ofxRPI4Window::colorspace_on) ofxRPI4Window::dovi_pattern_shader();
+   else							     ofxRPI4Window::dovi_image_shader();
+   ofxRPI4Window::shader_init=0;
+  }
+  /* End Patch RPI P4 */
  }
  image_save=tmp_dir+ofToString("running/")+ofToString(p_name)+".save";
  const char * save = image_save.c_str();
@@ -631,8 +649,8 @@ void ofApp::shader_begin(int is_image) {
   ofxRPI4Window::shader.setUniform1i("colorimetry", ofxRPI4Window::avi_info.colorimetry);
   ofxRPI4Window::shader.setUniform1i("color_format", ofxRPI4Window::avi_info.output_format);
   ofxRPI4Window::shader.setUniform1i("rgb_quant_range", ofxRPI4Window::avi_info.rgb_quant_range);
-  ofxRPI4Window::shader.setUniform1i("is_image", is_image);
-  ofxRPI4Window::shader.setUniform1i("is_std_DoVi", ofxRPI4Window::is_std_DoVi);
+ // ofxRPI4Window::shader.setUniform1i("is_image", is_image);
+//  ofxRPI4Window::shader.setUniform1i("is_std_DoVi", ofxRPI4Window::is_std_DoVi);
   ofxRPI4Window::shader.setUniform2f("resolution", ofGetWindowWidth(), ofGetWindowHeight());
  }		
 }
