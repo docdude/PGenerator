@@ -44,9 +44,13 @@ std::string max_luma="4000";
 std::string min_luma="1";
 std::string max_bpc="8";
 std::string mode_idx="-1";
-std::string dv_metadata="0";
 std::string dv_status="0";
 std::string dv_interface="0";
+std::string dv_profile="1";
+std::string dv_map_mode="2";
+std::string dv_minpq="62";
+std::string dv_maxpq="3696";
+std::string dv_diagonal="42";
 /* Include RPI p4 header file */
 #include "ofxRPI4Window.h"
 // End Patch RPI p4
@@ -110,9 +114,13 @@ int main(int argc, char **argv){
    if(el[0] == "is_std_dovi")     is_std_dovi=el[1];
    if(el[0] == "primaries")       primaries=el[1];
    if(el[0] == "mode_idx")        mode_idx=el[1];
-   if(el[0] == "dv_metadata")     dv_metadata=el[1];
    if(el[0] == "dv_status")       dv_status=el[1];
    if(el[0] == "dv_interface")    dv_interface=el[1];
+   if(el[0] == "dv_profile")      dv_profile=el[1];
+   if(el[0] == "dv_map_mode")     dv_map_mode=el[1];
+   if(el[0] == "dv_minpq")    	  dv_minpq=el[1];
+   if(el[0] == "dv_maxpq")        dv_maxpq=el[1];
+   if(el[0] == "dv_diagonal")     dv_diagonal=el[1];
   }
   file.close();
 
@@ -131,9 +139,15 @@ int main(int argc, char **argv){
   ofxRPI4Window::hdr_metadata.hdmi_metadata_type1.min_display_mastering_luminance=atof(min_luma.c_str());
   ofxRPI4Window::avi_info.max_bpc=atoi(max_bpc.c_str());
   ofxRPI4Window::mode_idx=atoi(mode_idx.c_str());
-  ofxRPI4Window::dv_metadata=atoi(dv_metadata.c_str());
   ofxRPI4Window::dv_status=atoi(dv_status.c_str());
   ofxRPI4Window::dv_interface=atoi(dv_interface.c_str());
+  ofApp::dv_profile=atoi(dv_profile.c_str());
+  ofApp::dv_map_mode=atoi(dv_map_mode.c_str());
+  ofApp::dv_minpq=atoi(dv_minpq.c_str());
+  ofApp::dv_maxpq=atoi(dv_maxpq.c_str());
+  ofApp::dv_diagonal=atoi(dv_diagonal.c_str());
+
+
   /* RPI4 Run App */
   ofGLESWindowSettings settings;
   settings.glesVersion = 3;

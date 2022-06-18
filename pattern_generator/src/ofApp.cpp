@@ -819,7 +819,110 @@ puts("");
 
 
 #endif
+  int ofApp::dv_profile=0;
+  int ofApp::dv_map_mode=2;
+  int ofApp::dv_minpq=62;
+  int ofApp::dv_maxpq=3696;
+  int ofApp::dv_diagonal=42;
+/*
+ ##########################################################
+ #                   Update DoVi Metadata                 #
+ ##########################################################
+*/
+struct ofApp::dv_metadata ofApp::dovi_metadata_update(int bit_depth) {
+	int crc;
 
+
+	
+	if (dv_map_mode != dv_metadata.dv_map_mode || 
+	    dv_minpq != dv_metadata.dv_minpq || 
+		dv_maxpq != dv_metadata.dv_maxpq ||
+		dv_diagonal != dv_metadata.dv_diagonal) dv_meta_update = 1; 
+		
+	/* DV Profile 8.1 */	
+	if (dv_profile == 0) {
+
+		if (dv_meta_update) {	
+			/* Source display minPQ, maxPQ(in 12-bit PQ encoding) and diagonal */
+			/* The value shall be in the range of 0 to 4095, inclusive. If source_min_PQ is not present, it shall be inferred to be 62 */
+			dv_metadata.dv_meta8_1[69] = (dv_minpq  >> 8) & 0xff;
+			dv_metadata.dv_meta8_1[70] = dv_minpq & 0xff;
+			/* The value shall be in the range of 0 to 4095, inclusive. If source_max_PQ is not present, it shall be inferred to be 3696 */			
+			dv_metadata.dv_meta8_1[71] = (dv_maxpq >> 8) & 0xff;
+			dv_metadata.dv_meta8_1[72] = dv_maxpq & 0xff;	
+			/* source_diagonal indicates the diagonal size of source display in inch. The value shall be in the range of 0 to 1023, inclusive. If source_diagonal is not present, it shall be inferred to be 42 */
+			dv_metadata.dv_meta8_1[73] = (dv_diagonal >> 8) & 0xff;
+			dv_metadata.dv_meta8_1[74]	= dv_diagonal & 0xff;
+			
+			/* DV Mapping mode (Perceptual = 0,Absolute(Verify) = 1, Relative(Calibrate) = 2, Unknown=3, None = 256, // 0x00000100) */
+			dv_metadata.dv_meta8_1[92] = dv_map_mode & 0xff;
+			
+			/* Level 1 ext metadata block -- Current Scene minPQ, maxPQ, avgPQ(in 12-bit PQ encoding) */
+			/* The value shall be in the range of 0 to 4095, inclusive. If min_PQ is not present, it shall be inferred to be equal to the value of source_min_PQ */
+			dv_metadata.dv_meta8_1[81] = (dv_minpq  >> 8) & 0xff;
+			dv_metadata.dv_meta8_1[82] = dv_minpq & 0xff;
+			/* The value shall be in the range of 0 to 4095, inclusive. If max_PQ is not present, it shall be inferred to be equal to the value of source_max_PQ */
+			dv_metadata.dv_meta8_1[83] = (dv_maxpq >> 8) & 0xff;
+			dv_metadata.dv_meta8_1[84] = dv_maxpq & 0xff;
+			/* The value shall be in the range of 0 to 4095, inclusive. If avg_PQ is not present, it shall be inferred to be equal to the value of (source_min_PQ + source_max_PQ)/2 */
+			dv_metadata.dv_meta8_1[85] = (((dv_minpq + dv_maxpq)/2) >> 8) & 0xff;
+			dv_metadata.dv_meta8_1[86] = ((dv_minpq + dv_maxpq)/2) & 0xff;
+	
+			crc = ofApp::crc32mpeg(dv_metadata.dv_meta8_1,124);
+ 
+			dv_metadata.dv_meta8_1[124] = crc>>24;
+			dv_metadata.dv_meta8_1[125] = (crc>>16)&0xff;
+			dv_metadata.dv_meta8_1[126] = (crc>>8)&0xff;
+			dv_metadata.dv_meta8_1[127] =crc&0xff;
+			dv_meta_update = 0;
+		}	
+	}
+	/* DV Profile 8.2 */
+	if (dv_profile == 1) { 
+
+
+		if (dv_meta_update) {
+			/* Source display minPQ, maxPQ(in 12-bit PQ encoding) and diagonal */
+			/* The value shall be in the range of 0 to 4095, inclusive. If source_min_PQ is not present, it shall be inferred to be 62 */
+			dv_metadata.dv_meta8_2[69] = (dv_minpq  >> 8) & 0xff;
+			dv_metadata.dv_meta8_2[70] = dv_minpq & 0xff;
+			/* The value shall be in the range of 0 to 4095, inclusive. If source_max_PQ is not present, it shall be inferred to be 3696 */			
+			dv_metadata.dv_meta8_2[71] = (dv_maxpq >> 8) & 0xff;
+			dv_metadata.dv_meta8_2[72] = dv_maxpq & 0xff;
+			/* source_diagonal indicates the diagonal size of source display in inch. The value shall be in the range of 0 to 1023, inclusive. If source_diagonal is not present, it shall be inferred to be 42 */			
+			dv_metadata.dv_meta8_2[73] = (dv_diagonal >> 8) & 0xff;
+			dv_metadata.dv_meta8_2[74]	= dv_diagonal & 0xff;	
+
+			/* DV Mapping mode (Perceptual = 0,Absolute(Verify) = 1, Relative(Calibrate) = 2, Unknown=3, None = 256, // 0x00000100) */
+			dv_metadata.dv_meta8_2[92] = dv_map_mode & 0xff;
+			
+			/* Level 1 ext metadata block -- Current Scene minPQ, maxPQ, avgPQ(in 12-bit PQ encoding) */
+			/* The value shall be in the range of 0 to 4095, inclusive. If min_PQ is not present, it shall be inferred to be equal to the value of source_min_PQ */
+			dv_metadata.dv_meta8_2[81] = (dv_minpq  >> 8) & 0xff;
+			dv_metadata.dv_meta8_2[82] = dv_minpq & 0xff;
+			/* The value shall be in the range of 0 to 4095, inclusive. If max_PQ is not present, it shall be inferred to be equal to the value of source_max_PQ */
+			dv_metadata.dv_meta8_2[83] = (dv_maxpq >> 8) & 0xff;
+			dv_metadata.dv_meta8_2[84] = dv_maxpq & 0xff;
+			/* The value shall be in the range of 0 to 4095, inclusive. If avg_PQ is not present, it shall be inferred to be equal to the value of (source_min_PQ + source_max_PQ)/2 */
+			dv_metadata.dv_meta8_2[85] = (((dv_minpq + dv_maxpq)/2) >> 8) & 0xff;
+			dv_metadata.dv_meta8_2[86] = ((dv_minpq + dv_maxpq)/2) & 0xff;
+	
+			crc = ofApp::crc32mpeg(dv_metadata.dv_meta8_2,124);
+ 
+			dv_metadata.dv_meta8_2[124] = crc>>24;
+			dv_metadata.dv_meta8_2[125] = (crc>>16)&0xff;
+			dv_metadata.dv_meta8_2[126] = (crc>>8)&0xff;
+			dv_metadata.dv_meta8_2[127] =crc&0xff;
+			dv_meta_update = 0;
+		}	
+	}								 
+	dv_metadata.dv_map_mode = dv_map_mode;
+	dv_metadata.dv_minpq = dv_minpq;
+	dv_metadata.dv_maxpq = dv_maxpq;
+	dv_metadata.dv_diagonal = dv_diagonal;
+	
+return dv_metadata;
+}
 /*
  ##########################################################
  #                   Inject DoVi Metadata                 #
@@ -947,36 +1050,37 @@ void ofApp::dovi_metadata_inject(int bit_depth) {
 								0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x17, 0x9b, 0x95, 0xf9};
 
 
-
-
+//	struct dv_metadata dv_meta = ofApp::dovi_metadata_update(bit_depth);
+ofApp::dovi_metadata_update(bit_depth);
 		unsigned char mask = 1; // Bit mask
 		unsigned char bits[8];
 		unsigned char total_bits[1024] = {0};
 		int i, j = CHAR_BIT-1;
 
-		unsigned char cal[128];
-		unsigned char ver[128];
+	//	unsigned char dv_metadata[128];
+	//	unsigned char ver[128];
 		
-		int n = sizeof(cal)/sizeof(cal[0]);
+		int n = sizeof(dv_metadata_active)/sizeof(dv_metadata_active[0]);
 		
-		if (ofxRPI4Window::avi_info.colorimetry == 2) {
-			memcpy(cal, cal8_2, sizeof(cal)); 
-			memcpy(ver, ver8_2, sizeof(ver));
+	//	if (ofxRPI4Window::avi_info.colorimetry == 2) {
+		//	memcpy(cal, cal8_2, sizeof(cal)); 
+		//	memcpy(ver, ver8_2, sizeof(ver));
 		//	memcpy(cal, cal_murideo, sizeof(cal)); 
 		//	memcpy(ver, ver_murideo, sizeof(ver));
 
-		}
-		if (ofxRPI4Window::avi_info.colorimetry == 9) {
-			memcpy(cal, cal8_1, sizeof(cal));
-			memcpy(ver, ver8_1, sizeof(ver));
-		}	
-		if (ofxRPI4Window::dv_metadata == 0) {
+	//	}
+	//	if (ofxRPI4Window::avi_info.colorimetry == 9) {
+		if (dv_profile == 0) memcpy(dv_metadata_active, dv_metadata.dv_meta8_1, sizeof(dv_metadata));
+		if (dv_profile == 1) memcpy(dv_metadata_active, dv_metadata.dv_meta8_2, sizeof(dv_metadata));
+		//	memcpy(ver, ver8_1, sizeof(ver));
+		//}	
+	//	if (dv_map_mode == 0) {
 			// Extract the bits
 			for (int k=0; k < n; k++) {
-//				printf("byte 0x%02x : ",cal[k]);
+//				printf("byte 0x%02x : ",dv_metadata[k]);
 				for ( i = 0; i < 8; i++,j--,mask = 1) {
 				// Mask each bit in the byte and store it
-					bits[i] =( cal[k] & (mask<<=j))  !=0;
+					bits[i] =(dv_metadata_active[k] & (mask<<=j))  !=0;
 
 //					printf("%d", bits[i]);
 					total_bits[num_bits] = bits[i];
@@ -987,8 +1091,8 @@ void ofApp::dovi_metadata_inject(int bit_depth) {
 				j = CHAR_BIT-1;
 
 			}
-		    printf("Total number of Cal bits %d\n",num_bits);
-		} else if (ofxRPI4Window::dv_metadata == 1) {
+		//    printf("Total number of Cal bits %d\n",num_bits);
+/*		} else if (dv_map_mode == 1) {
 			// Extract the bits
 			for (int k=0; k < n; k++) {
 //				printf("byte 0x%02x : ",ver[k]);
@@ -1006,7 +1110,7 @@ void ofApp::dovi_metadata_inject(int bit_depth) {
 
 			}
 //			printf("Total number of Ver bits %d\n",num_bits);
-		}
+		} */
 		/* Inject DoVi RPU Display Management Data */
 		int z=0;
 		int cycles=0;
