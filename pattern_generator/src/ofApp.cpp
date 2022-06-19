@@ -528,9 +528,10 @@ void ofApp::image() {
 //	ofApp::YCbCr2RGB();
 //	dovi_rpu_inject();
 //ofApp::dovi_dump();
-			ofDisableTextureEdgeHack();
+	//		ofDisableTextureEdgeHack();
 img.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
- img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
+//dovi_metadata_inject(ofxRPI4Window::bit_depth);
+img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
 //ofApp::dovi_metadata_inject(ofxRPI4Window::bit_depth);
 	//img.save("/tmp/test.png");
    // rename(image_name_tmp.c_str(),image_name.c_str());
@@ -664,7 +665,7 @@ void ofApp::shader_end(int is_image) {
  if ((!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.output_format != 0) || (!ofxRPI4Window::shader_init &&ofxRPI4Window::is_std_DoVi)) {
   ofxRPI4Window::shader.end();
 
-  if (is_image) {
+  if (is_image) { 
 	if (ofxRPI4Window::avi_info.max_bpc == 10 && ofxRPI4Window::isHDR) float_img.getTexture().unbind();
     else 															         img.getTexture().unbind();
   }
@@ -923,6 +924,7 @@ struct ofApp::dv_metadata ofApp::dovi_metadata_update(int bit_depth) {
 	
 return dv_metadata;
 }
+#if 0
 /*
  ##########################################################
  #                   Inject DoVi Metadata                 #
@@ -934,12 +936,14 @@ void ofApp::dovi_metadata_inject(int bit_depth) {
 		int num_bits=0;
 		unsigned short *short_pixels;
 		unsigned char *pixels;
+		ofFbo fbo_dovi;
 		ofShortPixels short_pix;
+		//ofPixels &pix = img.getPixels();
 		ofPixels pix;
 		ofShortImage short_img;
 		ofImage img;
-			  	pix.clear();
-	 		img.clear();
+			//  	pix.clear();
+	 	//	img.clear();
 		//Getting pointer to pixel array of image
 		if (bit_depth == 10) {
 	//		short_pix.allocate(ofGetWindowWidth(), ofGetWindowHeight(), OF_IMAGE_COLOR_ALPHA);
@@ -956,14 +960,17 @@ void ofApp::dovi_metadata_inject(int bit_depth) {
 		} else {
 		//	img.clear(); 
 		//	img.grabScreen(0,0,ofGetWindowWidth(),ofGetWindowHeight());
-	//		pix.allocate(ofGetWindowWidth(), ofGetWindowHeight(), OF_IMAGE_COLOR_ALPHA);
-
-			fbo8.readToPixels(pix); 
-			pixels = pix.getData();//img.getPixels().getData();
+			pix.allocate(ofGetWindowWidth(), 2, OF_IMAGE_COLOR_ALPHA);
+			pix.setColor(255);
+		//	if (ofxRPI4Window::colorspace_on)
+			//   fbo8.readToPixels(pix); 
+		 //   else
+			//	pix = img.getPixels();
+	//	    pixels = pix.getData();//img.getPixels().getData();
 			//Calculate number of pixel components
-			width = pix.getWidth();//img.getPixels().getWidth();
-			height = pix.getHeight();//img.getPixels().getHeight();
-			channels = pix.getNumChannels();//img.getPixels().getNumChannels();
+	//		width = pix.getWidth();//img.getPixels().getWidth();
+	//		height = pix.getHeight();//img.getPixels().getHeight();
+	//		channels = pix.getNumChannels();//img.getPixels().getNumChannels();
 		}
 
 
@@ -1116,7 +1123,7 @@ ofApp::dovi_metadata_update(bit_depth);
 		int cycles=0;
 		int shift = bit_depth - 8;
 		int index;
-
+#if 0
 		for (int y=0; y<height; y++) {
 
 			for (int x=0; x<width; x++) {
@@ -1181,13 +1188,74 @@ ofApp::dovi_metadata_update(bit_depth);
 			}
 			if (cycles == 3) break; 
 		}
+#endif
+int x=0;
+//pix.setNumChannels(4);
+for(auto line: pix.getLines(0,2)){
+
+	for(auto pixel: line.getPixels()){
+	if (cycles < 3) {
+				if (x == 1024) {
+					x = 0;
+					cycles++;
+				}				
+		//		printf("posx=%d posy=%d z=%d Before: Y %d ,Cb %d , Cr %d ",x, y, z, Y, Cb, Cr);
+				if (bit_depth == 10){
+					Cr = 1016;
+					Cb = 0xff80; 
+				} else {
+					Y = 128;// << shift;
+					Cb = 16;// << shift;
+				}
+				if (total_bits[x] == 0) {
+					if (bit_depth == 10) {
+						Y = 0x1000;
+//				Cb= 0;
+					} else {
+						Cr = 0;
+					}
+//				printf(".");
+				}
+				if (total_bits[x] == 1) {
+					if (bit_depth == 10) {
+						Y = 0x1010;
+//				Cb = 1016;
+					} else {
+						Cr = 16;// << shift;
+					}
+//				printf("^");								
+				}
+		//		if (bit_depth == 10){
+		//			short_pixels[ index ] = Y;
+		//			short_pixels[ index + 1 ] = Cb;
+		//			short_pixels[ index + 2] = Cr;
+		//		} else {
+		//			pixels[ index ] = Y;
+		//			pixels[ index + 1 ] = Cb;
+		//			pixels[ index + 2] = Cr;
+		//		}
+		
+				pixel[0] = Y;
+		pixel[1] = Cb;
+		pixel[2] = Cr;
+	//			printf("==> After: Y %d ,Cb %d , Cr %d \n",Y, Cb, Cr);
+			 	x++;	
+			 }
+ 			if (cycles == 3) break;
+			}
+		//	if (cycles == 3) break; 
+		//}
+
+
+	}
+
 		if (bit_depth == 10) {
 			//short_img.clear();
 			ofSet10bitColor(1023,1023,1023,1023); 
 		//	short_img.allocate(ofGetWindowWidth(),ofGetWindowHeight(), OF_IMAGE_COLOR_ALPHA);
 			short_img.setFromPixels(short_pix);
 		//	short_img.save("/tmp/test.png");
-			ofDisableTextureEdgeHack();
+		//	ofDisableTextureEdgeHack();
 			short_img.getTexture().setTextureMinMagFilter(GL_NEAREST,GL_NEAREST);
 			if( short_img.isAllocated() ){ 
 				short_img.draw(0,0,ofGetWindowWidth(),ofGetWindowHeight());
@@ -1197,24 +1265,193 @@ ofApp::dovi_metadata_update(bit_depth);
 		short_img.clear();
 		} else {
 			
-	
-			ofSetColor(255,255,255,255);
+				ofSetColor(255,255,255,255); 
+
+		
 		//	img.allocate(ofGetWindowWidth(),ofGetWindowHeight(), OF_IMAGE_COLOR_ALPHA);
 			img.setFromPixels(pix);
+
+		fbo_dovi.allocate(ofGetWindowWidth(),2, GL_RGBA);
+		fbo_dovi.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
+
+		fbo_dovi.begin();
+		ofClear(0,0,0,0);
+		fbo_dovi.end();
 		
-			ofDisableTextureEdgeHack();
-			img.getTexture().setTextureMinMagFilter(GL_NEAREST,GL_NEAREST);
-			if( img.isAllocated() ){
-				img.draw(0,0,ofGetWindowWidth(),ofGetWindowHeight());
+		fbo_dovi.begin();
+		img.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
+
+		//img.drawSubsection(0,0,ofGetWindowWidth(),2,100,1);
+		img.drawSubsection(0,0,ofGetWindowWidth(),1,0,0,1920,1);
+			img.drawSubsection(0,1,1153,1,0,1);
+		fbo_dovi.end();
+	//	img.update();
+
+//			ofDisableTextureEdgeHack();
+		//	img.getTexture().setTextureMinMagFilter(GL_NEAREST,GL_NEAREST);
+	//		if( img.isAllocated() ){
+				fbo8.draw(0,0,ofGetWindowWidth(),ofGetWindowHeight());
 							//	dovi_img.push_back(img);
 							//	dovi_img.clear();
 			//					        if(dovi_img.size()>0){      
            // dovi_img.erase(dovi_img.begin());  
       //  } 
-
-			} 
+	 // ofEnableBlendMode( OF_BLENDMODE_SCREEN );
+fbo_dovi.draw(0,0,ofGetWindowWidth(),2);
+		//	} 
+	//	ofDisableBlendMode();
 		}
-//ofApp::crc32mpeg(cal5_422,124);
+}
+#endif 
+
+/*
+ ##########################################################
+ #                   Inject DoVi Metadata                 #
+ ##########################################################
+*/
+void ofApp::dovi_metadata_inject(int bit_depth) {
+		int Y=0, Cb=0, Cr=0;
+		int width=0, height=0, channels=0;
+		int num_bits=0;
+		unsigned short *short_pixels;
+		unsigned char *pixels;
+		ofFbo fbo_dovi;
+		ofShortPixels short_pix;
+		ofPixels pix;
+		ofShortImage short_img;
+		ofImage img;
+
+
+		if (bit_depth == 10) {
+			short_pix.allocate(ofGetWindowWidth(), 2, OF_IMAGE_COLOR_ALPHA);
+			short_pix.setColor(1023);
+		} else {
+
+			pix.allocate(ofGetWindowWidth(), 2, OF_IMAGE_COLOR_ALPHA);
+			pix.setColor(255);
+
+		}
+
+
+		ofApp::dovi_metadata_update(bit_depth);
+		unsigned char mask = 1; // Bit mask
+		unsigned char bits[8];
+		unsigned char total_bits[1024] = {0};
+		int i, j = CHAR_BIT-1;
+
+
+		
+		int n = sizeof(dv_metadata_active)/sizeof(dv_metadata_active[0]);
+
+		if (dv_profile == 0) memcpy(dv_metadata_active, dv_metadata.dv_meta8_1, sizeof(dv_metadata));
+		if (dv_profile == 1) memcpy(dv_metadata_active, dv_metadata.dv_meta8_2, sizeof(dv_metadata));
+
+
+			// Extract the bits
+			for (int k=0; k < n; k++) {
+//				printf("byte 0x%02x : ",dv_metadata[k]);
+				for ( i = 0; i < 8; i++,j--,mask = 1) {
+				// Mask each bit in the byte and store it
+					bits[i] =(dv_metadata_active[k] & (mask<<=j))  !=0;
+
+//					printf("%d", bits[i]);
+					total_bits[num_bits] = bits[i];
+					num_bits++;
+				}
+
+		//		puts("");
+				j = CHAR_BIT-1;
+
+			}
+		//    printf("Total number of Cal bits %d\n",num_bits);
+
+		/* Inject DoVi RPU Display Management Data */
+		int x=0;
+		int cycles=0;
+		int shift = bit_depth - 8;
+		int index;
+
+
+
+	for(auto line: pix.getLines(0,2)){
+
+		for(auto pixel: line.getPixels()){
+			if (cycles < 3) {
+				if (x == 1024) {
+					x = 0;
+					cycles++;
+				}				
+		//		printf("posx=%d posy=%d z=%d Before: Y %d ,Cb %d , Cr %d ",x, y, z, Y, Cb, Cr);
+				if (bit_depth == 10){
+					Cr = 1016;
+					Cb = 0xff80; 
+				} else {
+					Y = 128;// << shift;
+					Cb = 16;// << shift;
+				}
+				if (total_bits[x] == 0) {
+					if (bit_depth == 10) {
+						Y = 0x1000;
+//				Cb= 0;
+					} else {
+						Cr = 0;
+					}
+//				printf(".");
+				}
+				if (total_bits[x] == 1) {
+					if (bit_depth == 10) {
+						Y = 0x1010;
+//				Cb = 1016;
+					} else {
+						Cr = 16;// << shift;
+					}
+//				printf("^");								
+				}
+
+				pixel[0] = Y;
+				pixel[1] = Cb;
+				pixel[2] = Cr;
+	//			printf("==> After: Y %d ,Cb %d , Cr %d \n",Y, Cb, Cr);
+			 	x++;	
+			 }
+ 			if (cycles == 3) break;
+			}
+	}
+
+		if (bit_depth == 10) {
+			ofSet10bitColor(1023,1023,1023,1023); 
+			short_img.setFromPixels(short_pix);
+			fbo_dovi.allocate(ofGetWindowWidth(),2, GL_RGB10_A2);
+			fbo_dovi.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
+			fbo_dovi.begin();
+			ofClear(0,0,0,0);
+			fbo_dovi.end();
+			fbo_dovi.begin();
+			short_img.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
+			short_img.drawSubsection(0,0,ofGetWindowWidth(),1,0,0,ofGetWindowWidth(),1);
+			short_img.drawSubsection(0,1,1153,1,0,1);
+			fbo_dovi.end();
+			fbo10.draw(0,0,ofGetWindowWidth(),ofGetWindowHeight());
+			fbo_dovi.draw(0,0,ofGetWindowWidth(),2);		
+		
+
+		} else {
+			
+			ofSetColor(255,255,255,255); 
+			img.setFromPixels(pix);
+			fbo_dovi.allocate(ofGetWindowWidth(),2, GL_RGBA);
+			fbo_dovi.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
+			fbo_dovi.begin();
+			ofClear(0,0,0,0);
+			fbo_dovi.end();
+			fbo_dovi.begin();
+			img.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
+			img.drawSubsection(0,0,ofGetWindowWidth(),1,0,0,ofGetWindowWidth(),1);
+			img.drawSubsection(0,1,1153,1,0,1);
+			fbo_dovi.end();
+			fbo8.draw(0,0,ofGetWindowWidth(),ofGetWindowHeight());
+			fbo_dovi.draw(0,0,ofGetWindowWidth(),2);
+		}
 }
 
 void ofApp::dovi_dump() {
