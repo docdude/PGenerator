@@ -43,13 +43,12 @@ class ofApp : public ofBaseApp{
   char text_font[100]="/var/lib/PGenerator/fonts/PGenerator.ttf";
   ofTrueTypeFont myfont;
   ofImage img;
-  ofShader shader;
   /* Start Patch For RPI 4 */
   ofFloatImage float_img;
   ofShortImage short_img;
-  vector <ofImage> dovi_img;
   ofFbo fbo8;
   ofFbo fbo10;
+  ofFbo fbo_dovi;
   int arr_bits[2048][2048];
   int bits;
   /* End Patch For RPI 4 */
@@ -134,12 +133,10 @@ class ofApp : public ofBaseApp{
   static int dv_maxpq;
   static int dv_diagonal;
   int dv_meta_update=0;
-  int last_dv_map_mode;
-  int last_dv_minpq;
-  int last_dv_maxpq;
-  int last_dv_diagonal;
   void dovi_rpu_inject();
-  void dovi_metadata_inject(int bit_depth);
+  void dovi_metadata_mux();
+  void dovi_metadata_create();
+    void dovi_metadata_inject(int bit_depth);
   struct dv_metadata {
 //		unsigned char dv_meta8_2[128];
 	unsigned char dv_meta8_2[128] = {0x00, 0x00, 0x00, 0x00, 0x5d, 0x00, 0x00, 0x25, 0x66, 0x00, 0x00, 0x39, 0x93, 0x25, 0x66, 0xf9,
@@ -158,9 +155,7 @@ class ofApp : public ofBaseApp{
 									0x01, 0x00, 0x02, 0x0d, 0x37, 0x03, 0x33, 0x00, 0x00, 0x00, 0x06, 0xff, 0x02, 0x00, 0x00, 0x00,
 									0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 									0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x98, 0xbf, 0x4c, 0xad};
-	//	unsigned char ver8_2[128];
 
-	//	unsigned char ver8_1[128];
 	int dv_profile=0;
 	int dv_map_mode=2;
 	int dv_minpq=62;
@@ -169,7 +164,9 @@ class ofApp : public ofBaseApp{
   };
   struct dv_metadata dv_metadata;
   unsigned char dv_metadata_active[128];
-  struct dv_metadata dovi_metadata_update(int bit_depth);
+//  struct dv_metadata dovi_metadata_update(int bit_depth);
+void dovi_metadata_update();
+
   unsigned int crc32mpeg(unsigned char *message, size_t l);
   void dovi_dump();
   void fbo_allocate();
