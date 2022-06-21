@@ -46,7 +46,7 @@ std::string max_bpc="8";
 std::string mode_idx="-1";
 std::string dv_status="0";
 std::string dv_interface="0";
-std::string dv_profile="1";
+std::string dv_profile="2";
 std::string dv_map_mode="2";
 std::string dv_minpq="62";
 std::string dv_maxpq="3696";
@@ -141,7 +141,7 @@ int main(int argc, char **argv){
   ofxRPI4Window::mode_idx=atoi(mode_idx.c_str());
   ofxRPI4Window::dv_status=atoi(dv_status.c_str());
   ofxRPI4Window::dv_interface=atoi(dv_interface.c_str());
-  ofApp::dv_profile=atoi(dv_profile.c_str());
+  ofxRPI4Window::dv_profile=atoi(dv_profile.c_str());
   ofApp::dv_map_mode=atoi(dv_map_mode.c_str());
   ofApp::dv_minpq=atoi(dv_minpq.c_str());
   ofApp::dv_maxpq=atoi(dv_maxpq.c_str());

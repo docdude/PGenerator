@@ -51,6 +51,8 @@ class ofApp : public ofBaseApp{
   ofFbo fbo_dovi;
   int arr_bits[2048][2048];
   int bits;
+  std::string previous_draw_type;
+  std::string previous_image; 
   /* End Patch For RPI 4 */
 
   string image_save;
@@ -127,7 +129,7 @@ class ofApp : public ofBaseApp{
   void shader_begin(int is_image);
   void shader_end(int is_image);
   void YCbCr2RGB();
-  static int dv_profile;
+//  static int dv_profile;
   static int dv_map_mode;
   static int dv_minpq;
   static int dv_maxpq;
