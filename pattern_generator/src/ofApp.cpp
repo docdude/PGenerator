@@ -132,27 +132,32 @@ void ofApp::update(){
     dim1=dim2=0;
    }
   }
+
+ }
   /* Start Patch RPI P4 */
-  if (draw_type != "IMAGE") previous_image = "";
-  if (draw_type == "IMAGE") ofxRPI4Window::colorspace_on = 0;
-  else 		                ofxRPI4Window::colorspace_on = 1;
+  if (draw_type == "IMAGE") {
+   ofxRPI4Window::colorspace_on = 0;
+  }else {
+   ofxRPI4Window::colorspace_on = 1;
+   loop_count=0; //reset counter
+   previous_image = ""; 
+  }
 #if 1 
   if (ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.output_format != 0) {
-   ofxRPI4Window::rgb2ycbcr_shader();
+ //  ofxRPI4Window::rgb2ycbcr_shader();
    ofxRPI4Window::shader_init=0;
   }
   if (ofxRPI4Window::shader_init && ofxRPI4Window::is_std_DoVi) {
 
-  if (ofxRPI4Window::colorspace_on) ofxRPI4Window::dovi_pattern_shader();
-   else							     ofxRPI4Window::dovi_image_shader();
+//  if (ofxRPI4Window::colorspace_on) ofxRPI4Window::dovi_pattern_shader();
+ // else							     ofxRPI4Window::dovi_image_shader();
    ofApp::fbo_allocate(); //allocate framebuffer for DoVi background and patch
    ofApp::dovi_metadata_create(); // create dovi metadata fbo 
-   ofxRPI4Window::shader_init=0;
+   ofxRPI4Window::shader_init=0; 
   }
 #endif  
   previous_draw_type = draw_type;
   /* End Patch RPI P4 */
- }
  image_save=tmp_dir+ofToString("running/")+ofToString(p_name)+".save";
  const char * save = image_save.c_str();
  ifstream s(save);
@@ -409,41 +414,40 @@ void ofApp::image() {
  }
  /* Start Patch RPI P4 */
  if (ofxRPI4Window::avi_info.max_bpc == 10 && ofxRPI4Window::isHDR) {
-  if (previous_image != arr_image[i][to_draw]) {
+  if (previous_image != arr_image[i][to_draw] || loop_count < 2) { //needs to load each new image twice to allow time to load shader
   float_img.clear();
   float_img.load(arr_image[i][to_draw]);
   float_img.rotate90(arr_rotate[i][to_draw]);
-  ofSet10bitColor(1023,1023,1023,1023);
-  float_img.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
+
+  float_img.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST); //set pixel precision
+  loop_count++;
   }
-//  float_img.update();
+  ofSet10bitColor(1023,1023,1023,1023);
+//  float_img.update();  //update here no necessary,  occurs in both load and rotate90 routines 
   ofApp::shader_begin(1); //set for image = 1
   float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
   ofApp::shader_end(1); //set for image = 1
  /* End Patch RPI P4 */
  } else {
-  if (previous_image != arr_image[i][to_draw]) {
+  if (previous_image != arr_image[i][to_draw] || loop_count < 2) { //needs to load each new image twice to allow time to load shader
     img.clear();
     img.load(arr_image[i][to_draw]);
     img.rotate90(arr_rotate[i][to_draw]);
- //   ofSetColor(255,255,255,255);
-  //img.update();
-    img.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
-//	previous_image = arr_image[i][to_draw]; 
-	
+  //img.update(); //update here no necessary,  occurs in both load and rotate90 routines 
+    img.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST); //set pixel precision
+	loop_count++;
   }
+  ofSetColor(255,255,255,255);
   /* Start Patch RPI P4 */
   ofApp::shader_begin(1); //set for image = 1
   /* End Patch RPI P4 */
-     ofSetColor(255,255,255,255);
-	// img.update();
   img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]); 
   /* Start Patch RPI P4 */
   ofApp::shader_end(1); //set for image = 1
   /* End Patch RPI P4 */
  
  }
-  previous_image = arr_image[i][to_draw]; 
+ previous_image = arr_image[i][to_draw]; 
 }
 
 /*
@@ -528,7 +532,7 @@ void ofApp::setColor(int red, int green, int blue) {
   else                                ofSetColor(red,green,blue);
  }
 }
-
+#if 0
 /*
  ##########################################################
  #                       Shader Begin                     #
@@ -563,13 +567,77 @@ void ofApp::shader_begin(int is_image) {
   }
  }
 } 
+#endif
+#if 1
+/*
+ ##########################################################
+ #                       Shader Begin                     #
+ ##########################################################
+*/
+void ofApp::shader_begin(int is_image) {
+ if ((!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.output_format != 0) || (!ofxRPI4Window::shader_init && ofxRPI4Window::is_std_DoVi)) {
+  if (is_image) { 
+	if (ofxRPI4Window::avi_info.max_bpc == 10 && ofxRPI4Window::isHDR) float_img.getTexture().bind();
+	else 															         img.getTexture().bind();
+  }
+  if (ofxRPI4Window::is_std_DoVi && ofxRPI4Window::bit_depth == 10) fbo10.begin();
+  if (ofxRPI4Window::is_std_DoVi && ofxRPI4Window::bit_depth == 8) fbo8.begin();  
+  ofxRPI4Window::shader.begin();
+  if (ofxRPI4Window::is_std_DoVi) {
+	ofxRPI4Window::shader.setUniform2f("resolution", ofGetWindowWidth(), ofGetWindowHeight());
+	if (ofxRPI4Window::dv_profile == 2) {
+	  ofxRPI4Window::shader.setUniform3f("coeffs_num",0.2126, 0.7152, 0.0722); //BT709
+	  ofxRPI4Window::shader.setUniform3f("coeffs_div",1.8556, 1.5748, 0.5); //BT709
+	}
+	if (ofxRPI4Window::dv_profile == 1) {
+      ofxRPI4Window::shader.setUniform3f("coeffs_num",0.2627, 0.6780, 0.0593); //BT2020
+	  ofxRPI4Window::shader.setUniform3f("coeffs_div", 1.8814, 1.4746, 0.5); //BT2020
+	}
+
+  }	else {
+	int scalar1;
+	int scalar2;
+
+	if (ofxRPI4Window::avi_info.colorimetry == 2) {
+	  ofxRPI4Window::shader.setUniform3f("coeffs_num",0.2126, 0.7152, 0.0722); //BT709
+	  ofxRPI4Window::shader.setUniform3f("coeffs_div",1.8556, 1.5748, 0.5); //BT709
+	}	
+	if (ofxRPI4Window::avi_info.colorimetry == 9) {
+      ofxRPI4Window::shader.setUniform3f("coeffs_num",0.2627, 0.6780, 0.0593); //BT2020
+	  ofxRPI4Window::shader.setUniform3f("coeffs_div", 1.8814, 1.4746, 0.5); //BT2020
+	}
+	int shift = ofxRPI4Window::bit_depth - 8;
+	if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
+		scalar1 = 224 << shift;		
+		scalar2 = 219 << shift;
+	}
+	if (ofxRPI4Window::avi_info.rgb_quant_range == 2) {
+		scalar1 = 256 << shift;
+		scalar2 = 255 << shift;
+	}
+	int offset = 128 << shift;
+	int normalizer = (256 << shift) - 1;
+	int scale = (256 << (ofxRPI4Window::bit_depth == 10 ? 8 : 0)) - 1;
+	
+	ofxRPI4Window::shader.setUniform1i("scalar1", scalar1);
+    ofxRPI4Window::shader.setUniform1i("scalar2", scalar2);
+    ofxRPI4Window::shader.setUniform1i("offset", offset);
+    ofxRPI4Window::shader.setUniform1i("scale", scale);
+    ofxRPI4Window::shader.setUniform1i("normalizer", normalizer);
+    ofxRPI4Window::shader.setUniform1i("color_format", ofxRPI4Window::avi_info.output_format);
+    ofxRPI4Window::shader.setUniform1i("is_image", is_image);
+
+  }
+ }
+} 
+#endif
 /*
  ##########################################################
  #                        Shader End                      #
  ##########################################################
 */
 void ofApp::shader_end(int is_image) {
- if ((!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.output_format != 0) || (!ofxRPI4Window::shader_init &&ofxRPI4Window::is_std_DoVi)) {
+ if ((!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.output_format != 0) || (!ofxRPI4Window::shader_init && ofxRPI4Window::is_std_DoVi)) {
   ofxRPI4Window::shader.end();
 
   if (is_image) { 
@@ -623,115 +691,12 @@ void ofApp::YCbCr2RGB(){
 		img.update();
 	}
 }
-#if 0
-void ofApp::dovi_rpu_inject() {
-	if (ofxRPI4Window::avi_info.rgb_quant_range == 1 && ofxRPI4Window::avi_info.output_format == 2) {
-		int Y=0, Cb=0, Cr=0;
-		//Getting pointer to pixel array of image
-		unsigned char *pixels = img.getPixels().getData();
-		//Calculate number of pixel components
-		int width = img.getPixels().getWidth();
-		int height = img.getPixels().getHeight();
-		int channels = img.getPixels().getNumChannels();
-		int num_bits=0;
-		unsigned char byte[] = {0x00,0x00,0x00,0x01,0x19,0x08,0x09,0x00,0x40,0x61,0xb6,0x50,0x6f,0x00,0x3f,0xf8,0x01,0xff,
-								0xc0,0x0f,0xff,0xd0,0x00,0x00,0x10,0x00,0x00,0x1b,0x00,0x00,0x03,0x02,0x00,0x00,0x03,0x03,
-								0x60,0x00,0x00,0x40,0x00,0x00,0x68,0x80,0x00,0x0c,0x7c,0x1a,0x44,0x80,0x03,0xf1,0x6c,0x11,
-								0x0c,0x80,0x00,0x04,0x2f,0xa9,0x5c,0x00,0x00,0x03,0x00,0x00,0x20,0x00,0x00,0x03,0x00,0x20,
-								0x00,0x00,0x03,0x01,0x0a,0xe7,0xfa,0x8f,0xfa,0x8f,0xfa,0x8d,0x0a,0xe7,0xfa,0x8f,0xfa,0x8f,
-								0xfa,0x8d,0x0a,0xe7,0xff,0xfc,0x00,0x00,0x03,0x00,0x00,0x03,0x00,0x00,0x03,0x00,0x01,0x90,
-								0x81,0xf7,0x38,0x05,0x45,0x30,0x08,0x01,0x3c,0x80,0x8c,0x00,0xc0,0x28,0x21,0x22,0x98,0x00,
-								0x80,0x08,0x00,0x80,0x01,0x00,0x02,0x02,0x00,0x00,0x03,0x00,0x09,0x06,0x0f,0xa0,0x00,0x32,
-								0x00,0x00,0x03,0x00,0x00,0x46,0xf1,0x99,0x5c,0x80 };
-
-		unsigned char mask = 1; // Bit mask
-		unsigned char bits[8];
-		unsigned char total_bits[1500] = {0};
-		int i, j = CHAR_BIT-1;
-		int n = sizeof(byte)/sizeof(byte[0]);
-
-		// Extract the bits
-		for (int k=0; k < n; k++) {
-			printf("byte 0x%02x : ",byte[k]);
-			for ( i = 0; i < 8; i++,j--,mask = 1) {
-			// Mask each bit in the byte and store it
-				bits[i] =( byte[k] & (mask<<=j))  !=0;
-
-				printf("%d", bits[i]);
-				total_bits[num_bits] = bits[i];
-				num_bits++;
-			}
-
-			puts("");
-			j = CHAR_BIT-1;
-
-		}
-		printf("Total number of bits %d\n",num_bits);
-		int z=0;
-		for (int y=0; y<height; y++) {
-			for (int x=0; x<width; x++) {
-        
-				//Read pixel (x,y) color components
-				int index = channels * (x + width * y);
-				
-					Y = pixels[ index ];
-					Cb = pixels[ index + 1 ];
-					Cr = pixels[ index + 2 ];
-
-					if (index == 0) { //set metadata identifier to 0b00, single packet contains all DM metadata
-					//	printf("z=%d Before: Y %d ,Cb %d , Cr %d ",z, Y, Cb, Cr);
-
-						Cb &= 0x3fe;
-						Cr &= 0x3fe;
-						printf("..");
-					}
-					if ((z <= num_bits) && (index >= 0)) {
-					//	printf("z=%d Before: Y %d ,Cb %d , Cr %d ",z, Y, Cb, Cr);
-
-						if (z % 2 == 0) {
-							//printf(" even ");
-							if (total_bits[z] == 0) {
-								Cb &= 0x3fe;
-							//	Cb = 
-								printf(".");
-							} else {
-								Cb |= 1;
-								printf("^");
-							}
-						}else{
-							//printf(" odd ");
-							if (total_bits[z] == 0) {
-								Cr &= 0x3fe;
-								printf(".");
-							} else {
-								Cr |= 1;
-								printf("^");
-							}
-						}
-		//		printf("==> After: Y %d ,Cb %d , Cr %d \n",Y, Cb, Cr);
-						z++;
-						
-					pixels[ index + 1 ] = Cb;
-					pixels[ index + 2 ] = Cr;
-					}
-
-			}
-		}
-puts("");
-	}
-
-	//Calling img.update() to apply changes
-	img.update();
-
-}
 
 
-#endif
-
-  int ofApp::dv_map_mode=2;
-  int ofApp::dv_minpq=62;
-  int ofApp::dv_maxpq=3696;
-  int ofApp::dv_diagonal=42;
+int ofApp::dv_map_mode=2;
+int ofApp::dv_minpq=62;
+int ofApp::dv_maxpq=3696;
+int ofApp::dv_diagonal=42;
 /*
  ##########################################################
  #                   Update DoVi Metadata                 #
@@ -788,7 +753,6 @@ void ofApp::dovi_metadata_update() {
 	/* DV Profile 8.2 */
 	if (ofxRPI4Window::dv_profile == 2) { 
 
-
 		if (dv_meta_update) {
 			/* Source display minPQ, maxPQ(in 12-bit PQ encoding) and diagonal */
 			/* The value shall be in the range of 0 to 4095, inclusive. If source_min_PQ is not present, it shall be inferred to be 62 */
@@ -828,8 +792,7 @@ void ofApp::dovi_metadata_update() {
 	dv_metadata.dv_minpq = dv_minpq;
 	dv_metadata.dv_maxpq = dv_maxpq;
 	dv_metadata.dv_diagonal = dv_diagonal;
-	
-//return dv_metadata;
+
 }
 
 /*
@@ -951,11 +914,131 @@ void ofApp::dovi_metadata_create() {
 		img.drawSubsection(0,0,ofGetWindowWidth(),1,0,0,ofGetWindowWidth(),1);
 		img.drawSubsection(0,1,1153,1,0,1);
 		fbo_dovi.end();	
-	//	img.clear();
 	}	
 }	
 	
-	
+/*
+ ##########################################################
+ #                   Draw DoVi Pattern/Image              #
+ ##########################################################
+*/
+void ofApp::dovi_metadata_mux() {
+
+
+	if (ofxRPI4Window::bit_depth == 10) {
+		ofSetColor(1023,1023,1023,1023); 
+		fbo10.draw(0,0,ofGetWindowWidth(),ofGetWindowHeight());
+		fbo_dovi.draw(0,0,ofGetWindowWidth(),2);		
+	} else {
+		ofSetColor(255,255,255,255); 
+		fbo8.draw(0,0,ofGetWindowWidth(),ofGetWindowHeight());		
+		fbo_dovi.draw(0,0,ofGetWindowWidth(),2);
+		}
+}
+
+
+
+/*
+ ##########################################################
+ #                   Set DoVi Background                  #
+ ##########################################################
+*/
+void ofApp::setDoViBackground(int redbg, int greenbg, int bluebg) {
+	int bits = ofxRPI4Window::bit_depth;
+	redbg   *= ((pow(2,(8+(bits-8))) - 1) / (pow(2,8) - 1));
+	greenbg *= ((pow(2,(8+(bits-8))) - 1) / (pow(2,8) - 1));
+	bluebg  *= ((pow(2,(8+(bits-8))) - 1) / (pow(2,8) - 1));
+	ofApp::setColor(redbg,greenbg,bluebg);
+	ofApp::shader_begin(0);
+
+	ofDrawRectangle(0,0,ofGetWindowWidth(),ofGetWindowHeight());
+
+	ofApp::shader_end(0);
+}
+
+/*
+ ##########################################################
+ #                        FBO Allocate                    #
+ ##########################################################
+*/
+void ofApp::fbo_allocate() {
+	if (ofxRPI4Window::is_std_DoVi) {
+		ofFboSettings settings;
+        settings.width                      = ofGetWidth();
+        settings.height                     = 2;
+        settings.internalformat             = GL_RGBA;
+		//set pixel precision
+        settings.minFilter                  = GL_NEAREST;
+        settings.maxFilter                  = GL_NEAREST;
+
+		//allocate dovi metadata fbo, uses 8bit texture
+//		fbo_dovi.allocate(ofGetWindowWidth(),2, GL_RGBA);
+		fbo_dovi.allocate(settings);
+		fbo_dovi.begin();
+		ofClear(0,0,0,0);
+		fbo_dovi.end();
+
+		if (ofxRPI4Window::bit_depth == 10) {
+			//allocate 10bit fbo
+			settings.height 					= ofGetWindowHeight();
+			settings.internalformat             = GL_RGB10_A2;
+			//fbo10.allocate(ofGetWindowWidth(),ofGetWindowHeight(), GL_RGB10_A2);
+			fbo10.allocate(settings);
+			fbo10.begin();
+			ofClear10bit(0,0,0,0);
+			fbo10.end();
+		} else {
+			//allocate 8bit fbo
+			settings.height = ofGetWindowHeight();
+			fbo8.allocate(settings);
+	//		fbo8.allocate(ofGetWindowWidth(),ofGetWindowHeight(), GL_RGBA);
+			fbo8.begin();
+			ofClear(0,0,0,0);
+			fbo8.end();
+		}
+	}
+}
+
+/*
+ ##########################################################
+ #                       DoVi CRC32                       #
+ ##########################################################
+*/
+unsigned int ofApp::crc32mpeg(unsigned char *message, size_t l)
+{
+   size_t i, j;
+   unsigned int crc, msb;
+
+   crc = 0xFFFFFFFF;
+   for(i = 0; i < l; i++) {
+      // xor next byte to upper bits of crc
+      crc ^= (((unsigned int)message[i])<<24);
+      for (j = 0; j < 8; j++) {    // Do eight times.
+            msb = crc>>31;
+            crc <<= 1;
+            crc ^= (0 - msb) & 0x04C11DB7;
+      }
+
+   }
+#if 0   
+   printf("crc %x ", crc>>24);
+   printf("crc %x ", (crc>>16)&0xff);
+   printf("crc %x ", (crc>>8)&0xff);
+   printf("crc %x\n", crc&0xff);
+#endif 
+
+  return crc;         // don't complement crc on output
+}
+
+
+/*
+ ##########################################################
+ #                        Old Routines                    #
+ ##########################################################
+*/
+
+
+
 #if 0
 /*
  ##########################################################
@@ -963,67 +1046,62 @@ void ofApp::dovi_metadata_create() {
  ##########################################################
 */
 void ofApp::dovi_metadata_inject(int bit_depth) {
-		int Y=0, Cb=0, Cr=0;
-		int width=0, height=0, channels=0;
-		int num_bits=0;
-		unsigned short *short_pixels;
-		unsigned char *pixels;
+	int Y=0, Cb=0, Cr=0;
+	int width=0, height=0, channels=0;
+	int num_bits=0;
+	unsigned short *short_pixels;
+	unsigned char *pixels;
 	//	ofFbo fbo_dovi;
-		ofShortPixels short_pix;
-		ofPixels pix;
-		ofShortImage short_img;
-		ofImage img;
+	ofShortPixels short_pix;
+	ofPixels pix;
+	ofShortImage short_img;
+	ofImage img;
 
-		if (bit_depth == 10) {
-			short_pix.allocate(ofGetWindowWidth(), 2, OF_IMAGE_COLOR_ALPHA);
-			short_pix.setColor(1023);
-		} else {
+	if (bit_depth == 10) {
+		short_pix.allocate(ofGetWindowWidth(), 2, OF_IMAGE_COLOR_ALPHA);
+		short_pix.setColor(1023);
+	} else {
 
-			pix.allocate(ofGetWindowWidth(), 2, OF_IMAGE_COLOR_ALPHA);
-			pix.setColor(255);
+		pix.allocate(ofGetWindowWidth(), 2, OF_IMAGE_COLOR_ALPHA);
+		pix.setColor(255);
+	}
 
-		}
 
-
-		ofApp::dovi_metadata_update();
-		unsigned char mask = 1; // Bit mask
-		unsigned char bits[8];
-		unsigned char total_bits[1024] = {0};
-		int i, j = CHAR_BIT-1;
+	ofApp::dovi_metadata_update();
+	unsigned char mask = 1; // Bit mask
+	unsigned char bits[8];
+	unsigned char total_bits[1024] = {0};
+	int i, j = CHAR_BIT-1;
 
 
 		
-		int n = sizeof(dv_metadata_active)/sizeof(dv_metadata_active[0]);
+	int n = sizeof(dv_metadata_active)/sizeof(dv_metadata_active[0]);
 
-		if (ofxRPI4Window::dv_profile == 1) memcpy(dv_metadata_active, dv_metadata.dv_meta8_1, sizeof(dv_metadata));
-		if (ofxRPI4Window::dv_profile == 2) memcpy(dv_metadata_active, dv_metadata.dv_meta8_2, sizeof(dv_metadata));
+	if (ofxRPI4Window::dv_profile == 1) memcpy(dv_metadata_active, dv_metadata.dv_meta8_1, sizeof(dv_metadata));
+	if (ofxRPI4Window::dv_profile == 2) memcpy(dv_metadata_active, dv_metadata.dv_meta8_2, sizeof(dv_metadata));
 
+	// Extract the bits
+	for (int k=0; k < n; k++) {
+//		printf("byte 0x%02x : ",dv_metadata[k]);
+		for ( i = 0; i < 8; i++,j--,mask = 1) {
+		// Mask each bit in the byte and store it
+			bits[i] =(dv_metadata_active[k] & (mask<<=j))  !=0;
+//			printf("%d", bits[i]);
+			total_bits[num_bits] = bits[i];
+			num_bits++;
+		}
 
-			// Extract the bits
-			for (int k=0; k < n; k++) {
-//				printf("byte 0x%02x : ",dv_metadata[k]);
-				for ( i = 0; i < 8; i++,j--,mask = 1) {
-				// Mask each bit in the byte and store it
-					bits[i] =(dv_metadata_active[k] & (mask<<=j))  !=0;
+	//		puts("");
+		j = CHAR_BIT-1;
 
-//					printf("%d", bits[i]);
-					total_bits[num_bits] = bits[i];
-					num_bits++;
-				}
+	}
+	//    printf("Total number of Cal bits %d\n",num_bits);
 
-		//		puts("");
-				j = CHAR_BIT-1;
-
-			}
-		//    printf("Total number of Cal bits %d\n",num_bits);
-
-		/* Inject DoVi RPU Display Management Data */
-		int x=0;
-		int cycles=0;
-		int shift = bit_depth - 8;
-		int index;
-
-
+	/* Create DoVi RPU Display Management Data */
+	int x=0;
+	int cycles=0;
+	int shift = bit_depth - 8;
+	int index;
 
 	for(auto line: pix.getLines(0,2)){
 
@@ -1070,70 +1148,31 @@ void ofApp::dovi_metadata_inject(int bit_depth) {
 			}
 	}
 
-		if (bit_depth == 10) {
-			ofSet10bitColor(1023,1023,1023,1023); 
-			short_img.setFromPixels(short_pix);
-//			fbo_dovi.allocate(ofGetWindowWidth(),2, GL_RGB10_A2);
-//			fbo_dovi.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
-//			fbo_dovi.begin();
-//			ofClear(0,0,0,0);
-//			fbo_dovi.end();
-			fbo_dovi.begin();
-			short_img.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
-			short_img.drawSubsection(0,0,ofGetWindowWidth(),1,0,0,ofGetWindowWidth(),1);
-			short_img.drawSubsection(0,1,1153,1,0,1);
-			fbo_dovi.end();
-					fbo10.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
-
-			fbo10.draw(0,0,ofGetWindowWidth(),ofGetWindowHeight());
-					fbo_dovi.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
-
-			fbo_dovi.draw(0,0,ofGetWindowWidth(),2);		
-		
-
-		} else {
-			
-			ofSetColor(255,255,255,255); 
-			img.setFromPixels(pix);
-//			fbo_dovi.allocate(ofGetWindowWidth(),2, GL_RGBA);
-//			fbo_dovi.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
-//			fbo_dovi.begin();
-//			ofClear(0,0,0,0);
-//			fbo_dovi.end();
-			fbo_dovi.begin();
-			img.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
-			img.drawSubsection(0,0,ofGetWindowWidth(),1,0,0,ofGetWindowWidth(),1);
-			img.drawSubsection(0,1,1153,1,0,1);
-			fbo_dovi.end();
-	//				fbo8.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
-
-			fbo8.draw(0,0,ofGetWindowWidth(),ofGetWindowHeight());
-//					fbo_dovi.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
-
-			fbo_dovi.draw(0,0,ofGetWindowWidth(),2);
-		}
-}
-#endif 
-
-/*
- ##########################################################
- #                   Draw DoVi Pattern/Image              #
- ##########################################################
-*/
-void ofApp::dovi_metadata_mux() {
-
-
-	if (ofxRPI4Window::bit_depth == 10) {
-		ofSetColor(1023,1023,1023,1023); 
+	if (bit_depth == 10) {
+		ofSet10bitColor(1023,1023,1023,1023); 
+		short_img.setFromPixels(short_pix);
+		fbo_dovi.begin();
+		short_img.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
+		short_img.drawSubsection(0,0,ofGetWindowWidth(),1,0,0,ofGetWindowWidth(),1);
+		short_img.drawSubsection(0,1,1153,1,0,1);
+		fbo_dovi.end();
 		fbo10.draw(0,0,ofGetWindowWidth(),ofGetWindowHeight());
 		fbo_dovi.draw(0,0,ofGetWindowWidth(),2);		
 	} else {
+			
 		ofSetColor(255,255,255,255); 
-		fbo8.draw(0,0,ofGetWindowWidth(),ofGetWindowHeight());		
+		img.setFromPixels(pix);
+		fbo_dovi.begin();
+		img.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
+		img.drawSubsection(0,0,ofGetWindowWidth(),1,0,0,ofGetWindowWidth(),1);
+		img.drawSubsection(0,1,1153,1,0,1);
+		fbo_dovi.end();
+		fbo8.draw(0,0,ofGetWindowWidth(),ofGetWindowHeight());
 		fbo_dovi.draw(0,0,ofGetWindowWidth(),2);
-		}
+	}
 }
-
+#endif 
+#if 0
 void ofApp::dovi_dump() {
 		int Y=0, Cb=0, Cr=0;
 		//Getting pointer to pixel array of image
@@ -1215,90 +1254,108 @@ void ofApp::dovi_dump() {
 		puts("");
 
 }
-
-/*
- ##########################################################
- #                   Set DoVi Background                  #
- ##########################################################
-*/
-void ofApp::setDoViBackground(int redbg, int greenbg, int bluebg) {
-	int bits = ofxRPI4Window::bit_depth;
-	redbg   *= ((pow(2,(8+(bits-8))) - 1) / (pow(2,8) - 1));
-	greenbg *= ((pow(2,(8+(bits-8))) - 1) / (pow(2,8) - 1));
-	bluebg  *= ((pow(2,(8+(bits-8))) - 1) / (pow(2,8) - 1));
-	ofApp::setColor(redbg,greenbg,bluebg);
-	ofApp::shader_begin(0);
-
-	ofDrawRectangle(0,0,ofGetWindowWidth(),ofGetWindowHeight());
-
-	ofApp::shader_end(0);
-}
-
-/*
- ##########################################################
- #                        FBO Allocate                    #
- ##########################################################
-*/
-void ofApp::fbo_allocate() {
-	if (ofxRPI4Window::is_std_DoVi) {
-		ofFboSettings settings;
-        settings.width                      = ofGetWidth();
-        settings.height                     = 2;
-        settings.internalformat             = GL_RGBA;
-		//set pixel precision
-        settings.minFilter                  = GL_NEAREST;
-        settings.maxFilter                  = GL_NEAREST;
-
-		//allocate dovi metadata fbo, uses 8bit texture
-//		fbo_dovi.allocate(ofGetWindowWidth(),2, GL_RGBA);
-		fbo_dovi.allocate(settings);
-		fbo_dovi.begin();
-		ofClear(0,0,0,0);
-		fbo_dovi.end();
-
-		if (ofxRPI4Window::bit_depth == 10) {
-			//allocate 10bit fbo
-			settings.height 					= ofGetWindowHeight();
-			settings.internalformat             = GL_RGB10_A2;
-			//fbo10.allocate(ofGetWindowWidth(),ofGetWindowHeight(), GL_RGB10_A2);
-			fbo10.allocate(settings);
-			fbo10.begin();
-			ofClear10bit(0,0,0,0);
-			fbo10.end();
-		} else {
-			//allocate 8bit fbo
-			settings.height = ofGetWindowHeight();
-			fbo8.allocate(settings);
-	//		fbo8.allocate(ofGetWindowWidth(),ofGetWindowHeight(), GL_RGBA);
-			fbo8.begin();
-			ofClear(0,0,0,0);
-			fbo8.end();
-		}
-	}
-}
-
-unsigned int ofApp::crc32mpeg(unsigned char *message, size_t l)
-{
-   size_t i, j;
-   unsigned int crc, msb;
-
-   crc = 0xFFFFFFFF;
-   for(i = 0; i < l; i++) {
-      // xor next byte to upper bits of crc
-      crc ^= (((unsigned int)message[i])<<24);
-      for (j = 0; j < 8; j++) {    // Do eight times.
-            msb = crc>>31;
-            crc <<= 1;
-            crc ^= (0 - msb) & 0x04C11DB7;
-      }
-
-   }
-#if 0   
-   printf("crc %x ", crc>>24);
-   printf("crc %x ", (crc>>16)&0xff);
-   printf("crc %x ", (crc>>8)&0xff);
-   printf("crc %x\n", crc&0xff);
 #endif 
+#if 0
+void ofApp::dovi_rpu_inject() {
+	if (ofxRPI4Window::avi_info.rgb_quant_range == 1 && ofxRPI4Window::avi_info.output_format == 2) {
+		int Y=0, Cb=0, Cr=0;
+		//Getting pointer to pixel array of image
+		unsigned char *pixels = img.getPixels().getData();
+		//Calculate number of pixel components
+		int width = img.getPixels().getWidth();
+		int height = img.getPixels().getHeight();
+		int channels = img.getPixels().getNumChannels();
+		int num_bits=0;
+		unsigned char byte[] = {0x00,0x00,0x00,0x01,0x19,0x08,0x09,0x00,0x40,0x61,0xb6,0x50,0x6f,0x00,0x3f,0xf8,0x01,0xff,
+								0xc0,0x0f,0xff,0xd0,0x00,0x00,0x10,0x00,0x00,0x1b,0x00,0x00,0x03,0x02,0x00,0x00,0x03,0x03,
+								0x60,0x00,0x00,0x40,0x00,0x00,0x68,0x80,0x00,0x0c,0x7c,0x1a,0x44,0x80,0x03,0xf1,0x6c,0x11,
+								0x0c,0x80,0x00,0x04,0x2f,0xa9,0x5c,0x00,0x00,0x03,0x00,0x00,0x20,0x00,0x00,0x03,0x00,0x20,
+								0x00,0x00,0x03,0x01,0x0a,0xe7,0xfa,0x8f,0xfa,0x8f,0xfa,0x8d,0x0a,0xe7,0xfa,0x8f,0xfa,0x8f,
+								0xfa,0x8d,0x0a,0xe7,0xff,0xfc,0x00,0x00,0x03,0x00,0x00,0x03,0x00,0x00,0x03,0x00,0x01,0x90,
+								0x81,0xf7,0x38,0x05,0x45,0x30,0x08,0x01,0x3c,0x80,0x8c,0x00,0xc0,0x28,0x21,0x22,0x98,0x00,
+								0x80,0x08,0x00,0x80,0x01,0x00,0x02,0x02,0x00,0x00,0x03,0x00,0x09,0x06,0x0f,0xa0,0x00,0x32,
+								0x00,0x00,0x03,0x00,0x00,0x46,0xf1,0x99,0x5c,0x80 };
 
-  return crc;         // don't complement crc on output
+		unsigned char mask = 1; // Bit mask
+		unsigned char bits[8];
+		unsigned char total_bits[1500] = {0};
+		int i, j = CHAR_BIT-1;
+		int n = sizeof(byte)/sizeof(byte[0]);
+
+		// Extract the bits
+		for (int k=0; k < n; k++) {
+			printf("byte 0x%02x : ",byte[k]);
+			for ( i = 0; i < 8; i++,j--,mask = 1) {
+			// Mask each bit in the byte and store it
+				bits[i] =( byte[k] & (mask<<=j))  !=0;
+
+				printf("%d", bits[i]);
+				total_bits[num_bits] = bits[i];
+				num_bits++;
+			}
+
+			puts("");
+			j = CHAR_BIT-1;
+
+		}
+		printf("Total number of bits %d\n",num_bits);
+		int z=0;
+		for (int y=0; y<height; y++) {
+			for (int x=0; x<width; x++) {
+        
+				//Read pixel (x,y) color components
+				int index = channels * (x + width * y);
+				
+					Y = pixels[ index ];
+					Cb = pixels[ index + 1 ];
+					Cr = pixels[ index + 2 ];
+
+					if (index == 0) { //set metadata identifier to 0b00, single packet contains all DM metadata
+					//	printf("z=%d Before: Y %d ,Cb %d , Cr %d ",z, Y, Cb, Cr);
+
+						Cb &= 0x3fe;
+						Cr &= 0x3fe;
+						printf("..");
+					}
+					if ((z <= num_bits) && (index >= 0)) {
+					//	printf("z=%d Before: Y %d ,Cb %d , Cr %d ",z, Y, Cb, Cr);
+
+						if (z % 2 == 0) {
+							//printf(" even ");
+							if (total_bits[z] == 0) {
+								Cb &= 0x3fe;
+							//	Cb = 
+								printf(".");
+							} else {
+								Cb |= 1;
+								printf("^");
+							}
+						}else{
+							//printf(" odd ");
+							if (total_bits[z] == 0) {
+								Cr &= 0x3fe;
+								printf(".");
+							} else {
+								Cr |= 1;
+								printf("^");
+							}
+						}
+		//		printf("==> After: Y %d ,Cb %d , Cr %d \n",Y, Cb, Cr);
+						z++;
+						
+					pixels[ index + 1 ] = Cb;
+					pixels[ index + 2 ] = Cr;
+					}
+
+			}
+		}
+puts("");
+	}
+
+	//Calling img.update() to apply changes
+	img.update();
+
 }
+
+
+#endif
