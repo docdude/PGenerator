@@ -80,7 +80,7 @@ static YCbCr RGB2YCbCr(RGB rgb, int bits, int colorimetry, int rgb_quant_range) 
 	int scalar_full2 = 255 << (bits - 8);
 	int offset = 128 << (bits - 8);
 	int R, G, B;
-	int idx;
+	int idx = 0;
 	float d, e;
 	
 	R = rgb.R * ((pow(2,(8+(bits-8))) - 1) / (pow(2,8) - 1));  //x10 = (2^10 - 1) / (2^8 - 1) * x8, where x8 and x10 are 8 and 10 bit values respectively.
@@ -96,11 +96,11 @@ static YCbCr RGB2YCbCr(RGB rgb, int bits, int colorimetry, int rgb_quant_range) 
 //		G = G * 0.856305 + 64;
 //		B = B * 0.856305 + 64;
 //	}	
-	if (rgb_quant_range == 1) {
+	if (rgb_quant_range == 2) {
 		scalar1=scalar_limit1;
 		scalar2=scalar_limit2;
 	}
-	if (rgb_quant_range == 2) {
+	if (rgb_quant_range == 1) {
 		scalar1=scalar_full1;
 		scalar2=scalar_full2;
 	}
@@ -137,11 +137,11 @@ static RGB YCbCrToRGB(YCbCr ycbcr, int bits, int colorimetry, int rgb_quant_rang
 	int offset = 128 << (bits - 8);
 	int idx;
 	float d, e;
-	if (rgb_quant_range == 1) {
+	if (rgb_quant_range == 2) {
 		scalar1=scalar_limit1;
 		scalar2=scalar_limit2;
 	}
-	if (rgb_quant_range == 2) {
+	if (rgb_quant_range == 1) {
 		scalar1=scalar_full1;
 		scalar2=scalar_full2;
 	}

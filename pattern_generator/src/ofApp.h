@@ -47,6 +47,7 @@ class ofApp : public ofBaseApp{
   ofFloatImage float_img;
   ofShortImage short_img;
   ofFbo fbo8;
+  ofFbo fbo8_final;
   ofFbo fbo10;
   ofFbo fbo_dovi;
   int arr_bits[2048][2048];

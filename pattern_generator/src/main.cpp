@@ -18,7 +18,7 @@
  *
 */
  
-#include "ofMain.h"
+#include "ofMain.h" 
 #include "ofApp.h"
 #define TEST_BUILD
 #ifdef TEST_BUILD
@@ -31,7 +31,7 @@
 /* PGenerator Conf Default Variables */
 char PGenerator_conf[100]="/etc/PGenerator/PGenerator.conf";
 std::string color_format="0";
-std::string rgb_quant_range="2";
+std::string rgb_quant_range="1";
 std::string colorimetry="0";
 std::string is_hdr="0";
 std::string is_ll_dovi="0";

@@ -222,10 +222,14 @@ void ofApp::draw(){
 
   
   ofApp::setBackground(arr_redbg[i][to_draw], arr_greenbg[i][to_draw], arr_bluebg[i][to_draw]);
-
+ 
   ofApp::setColor(arr_red[i][to_draw],arr_green[i][to_draw],arr_blue[i][to_draw]); 
-
-  if(arr_draw[i][to_draw] !=  5) ofApp::shader_begin(0); //set for draw = 0
+#ifdef USE_DOVI_FBO
+  if (ofxRPI4Window::is_std_DoVi && ofxRPI4Window::bit_depth == 10) fbo10.begin();
+  if (ofxRPI4Window::is_std_DoVi && ofxRPI4Window::bit_depth == 8) fbo8.begin(); 
+#else 
+  if(arr_draw[i][to_draw] != 5) ofApp::shader_begin(0); //set for draw = 0
+#endif
  /* End Patch RPI P4 */
   if(arr_draw[i][to_draw] ==  1)
    ofApp::rectangle();
@@ -236,8 +240,13 @@ void ofApp::draw(){
   if(arr_draw[i][to_draw] ==  4)
    ofApp::text();
   /* Start Patch RPI P4 */
+#ifdef USE_DOVI_FBO
+  if (ofxRPI4Window::is_std_DoVi && ofxRPI4Window::bit_depth == 10) fbo10.end();
+  if (ofxRPI4Window::is_std_DoVi && ofxRPI4Window::bit_depth == 8) fbo8.end();
+  if(arr_draw[i][to_draw] != 5) ofApp::shader_begin(0); //set for draw = 0
+#endif
   if(arr_draw[i][to_draw] != 5) ofApp::shader_end(0); //set for draw = 0
-   if (arr_draw[i][to_draw] !=  5 && ofxRPI4Window::is_std_DoVi && !ofxRPI4Window::shader_init) ofApp::dovi_metadata_mux(); //draw dovi metadata muxed patch only if shader already initialized
+  if (arr_draw[i][to_draw] !=  5 && ofxRPI4Window::is_std_DoVi && !ofxRPI4Window::shader_init) ofApp::dovi_metadata_mux(); //draw dovi metadata muxed patch only if shader already initialized
   /* End Patch RPI P4 */
   if(arr_draw[i][to_draw] ==  5)
    ofApp::image();
@@ -415,17 +424,18 @@ void ofApp::image() {
  /* Start Patch RPI P4 */
  if (ofxRPI4Window::avi_info.max_bpc == 10 && ofxRPI4Window::isHDR) {
   if (previous_image != arr_image[i][to_draw] || loop_count < 2) { //needs to load each new image twice to allow time to load shader
-  float_img.clear();
-  float_img.load(arr_image[i][to_draw]);
-  float_img.rotate90(arr_rotate[i][to_draw]);
-
-  float_img.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST); //set pixel precision
-  loop_count++;
+    float_img.clear();
+    float_img.load(arr_image[i][to_draw]);
+    float_img.rotate90(arr_rotate[i][to_draw]);
+    float_img.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST); //set pixel precision
+    loop_count++;
   }
   ofSet10bitColor(1023,1023,1023,1023);
-//  float_img.update();  //update here no necessary,  occurs in both load and rotate90 routines 
+ /* Start Patch RPI P4 */
   ofApp::shader_begin(1); //set for image = 1
+ /* End Patch RPI P4 */
   float_img.draw(arr_posx[i][to_draw],arr_posy[i][to_draw],arr_dim1[i][to_draw],arr_dim2[i][to_draw]);
+ /* Start Patch RPI P4 */
   ofApp::shader_end(1); //set for image = 1
  /* End Patch RPI P4 */
  } else {
@@ -433,7 +443,6 @@ void ofApp::image() {
     img.clear();
     img.load(arr_image[i][to_draw]);
     img.rotate90(arr_rotate[i][to_draw]);
-  //img.update(); //update here no necessary,  occurs in both load and rotate90 routines 
     img.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST); //set pixel precision
 	loop_count++;
   }
@@ -480,7 +489,7 @@ void ofApp::setBackground(int redbg, int greenbg, int bluebg) {
      RGB data = RGB(redbg,greenbg,bluebg);
      YCbCr bg = RGB2YCbCr(data,10, ofxRPI4Window::avi_info.colorimetry, ofxRPI4Window::avi_info.rgb_quant_range);
      if (ofxRPI4Window::avi_info.output_format == 1) of10bitBackground(bg.Cb,bg.Cr,bg.Y);  //in YCbCr444, luminance is last channel
-     if (ofxRPI4Window::avi_info.output_format == 2) of10bitBackground(bg.Y,bg.Cb,bg.Cr);  //in YCbCr422
+     if (ofxRPI4Window::avi_info.output_format == 2)  of10bitBackground(bg.Y,bg.Cb,bg.Cr);  //in YCbCr422
     } else                                           of10bitBackground(redbg,greenbg,bluebg);
    }
   } else {
@@ -489,7 +498,7 @@ void ofApp::setBackground(int redbg, int greenbg, int bluebg) {
      RGB data = RGB(redbg,greenbg,bluebg);
      YCbCr bg = RGB2YCbCr(data,8,ofxRPI4Window::avi_info.colorimetry, ofxRPI4Window::avi_info.rgb_quant_range);
      if (ofxRPI4Window::avi_info.output_format == 1) ofBackground(bg.Cb,bg.Cr,bg.Y);  //in YCbCr444, luminance is last channel
-     if (ofxRPI4Window::avi_info.output_format == 2) ofBackground(bg.Y,bg.Cb,bg.Cr);  //in YCbCr422
+     if (ofxRPI4Window::avi_info.output_format == 2)  ofBackground(bg.Y,bg.Cb,bg.Cr);  //in YCbCr422
     } else                                           ofBackground(redbg,greenbg,bluebg);
    }
   }
@@ -568,7 +577,6 @@ void ofApp::shader_begin(int is_image) {
  }
 } 
 #endif
-#if 1
 /*
  ##########################################################
  #                       Shader Begin                     #
@@ -580,10 +588,19 @@ void ofApp::shader_begin(int is_image) {
 	if (ofxRPI4Window::avi_info.max_bpc == 10 && ofxRPI4Window::isHDR) float_img.getTexture().bind();
 	else 															         img.getTexture().bind();
   }
+#ifdef USE_DOVI_FBO
+  if (ofxRPI4Window::is_std_DoVi && ofxRPI4Window::bit_depth == 10) fbo10.begin(); 
+  if (ofxRPI4Window::is_std_DoVi && ofxRPI4Window::bit_depth == 8) fbo8_final.begin();  
+#else
   if (ofxRPI4Window::is_std_DoVi && ofxRPI4Window::bit_depth == 10) fbo10.begin();
   if (ofxRPI4Window::is_std_DoVi && ofxRPI4Window::bit_depth == 8) fbo8.begin();  
+#endif
   ofxRPI4Window::shader.begin();
+
   if (ofxRPI4Window::is_std_DoVi) {
+#ifdef USE_DOVI_FBO
+	 ofxRPI4Window::shader.setUniformTexture("tex0", fbo8.getTexture(), 0);
+#endif
 	ofxRPI4Window::shader.setUniform2f("resolution", ofGetWindowWidth(), ofGetWindowHeight());
 	if (ofxRPI4Window::dv_profile == 2) {
 	  ofxRPI4Window::shader.setUniform3f("coeffs_num",0.2126, 0.7152, 0.0722); //BT709
@@ -593,7 +610,9 @@ void ofApp::shader_begin(int is_image) {
       ofxRPI4Window::shader.setUniform3f("coeffs_num",0.2627, 0.6780, 0.0593); //BT2020
 	  ofxRPI4Window::shader.setUniform3f("coeffs_div", 1.8814, 1.4746, 0.5); //BT2020
 	}
-
+#ifdef USE_DOVI_FBO
+	fbo8.draw(0,0,ofGetWindowWidth(), ofGetWindowHeight());
+#endif
   }	else {
 	int scalar1;
 	int scalar2;
@@ -607,11 +626,11 @@ void ofApp::shader_begin(int is_image) {
 	  ofxRPI4Window::shader.setUniform3f("coeffs_div", 1.8814, 1.4746, 0.5); //BT2020
 	}
 	int shift = ofxRPI4Window::bit_depth - 8;
-	if (ofxRPI4Window::avi_info.rgb_quant_range == 1) {
+	if (ofxRPI4Window::avi_info.rgb_quant_range == 2) { //limited
 		scalar1 = 224 << shift;		
 		scalar2 = 219 << shift;
 	}
-	if (ofxRPI4Window::avi_info.rgb_quant_range == 2) {
+	if (ofxRPI4Window::avi_info.rgb_quant_range == 1) { //full
 		scalar1 = 256 << shift;
 		scalar2 = 255 << shift;
 	}
@@ -619,34 +638,39 @@ void ofApp::shader_begin(int is_image) {
 	int normalizer = (256 << shift) - 1;
 	int scale = (256 << (ofxRPI4Window::bit_depth == 10 ? 8 : 0)) - 1;
 	
-	ofxRPI4Window::shader.setUniform1i("scalar1", scalar1);
-    ofxRPI4Window::shader.setUniform1i("scalar2", scalar2);
-    ofxRPI4Window::shader.setUniform1i("offset", offset);
-    ofxRPI4Window::shader.setUniform1i("scale", scale);
-    ofxRPI4Window::shader.setUniform1i("normalizer", normalizer);
+	ofxRPI4Window::shader.setUniform1f("scalar1", scalar1);
+    ofxRPI4Window::shader.setUniform1f("scalar2", scalar2);
+    ofxRPI4Window::shader.setUniform1f("offset", offset);
+    ofxRPI4Window::shader.setUniform1f("scale", scale);
+    ofxRPI4Window::shader.setUniform1f("normalizer", normalizer);
     ofxRPI4Window::shader.setUniform1i("color_format", ofxRPI4Window::avi_info.output_format);
     ofxRPI4Window::shader.setUniform1i("is_image", is_image);
 
   }
  }
 } 
-#endif
 /*
  ##########################################################
  #                        Shader End                      #
  ##########################################################
 */
 void ofApp::shader_end(int is_image) {
- if ((!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.output_format != 0) || (!ofxRPI4Window::shader_init && ofxRPI4Window::is_std_DoVi)) {
+ if ((!ofxRPI4Window::shader_init && ofxRPI4Window::avi_info.output_format != 0) || (!ofxRPI4Window::shader_init && ofxRPI4Window::is_std_DoVi)) { 
   ofxRPI4Window::shader.end();
 
   if (is_image) { 
 	if (ofxRPI4Window::avi_info.max_bpc == 10 && ofxRPI4Window::isHDR) float_img.getTexture().unbind();
     else 															         img.getTexture().unbind();
   }
+#ifdef USE_DOVI_FBO
+  if (ofxRPI4Window::is_std_DoVi && ofxRPI4Window::bit_depth == 10) fbo10.end();
+  if (ofxRPI4Window::is_std_DoVi && ofxRPI4Window::bit_depth == 8) fbo8_final.end();
+#else
   if (ofxRPI4Window::is_std_DoVi && ofxRPI4Window::bit_depth == 10) fbo10.end();
   if (ofxRPI4Window::is_std_DoVi && ofxRPI4Window::bit_depth == 8) fbo8.end();
- }		
+#endif
+ }	
+
 }
 
  
@@ -931,7 +955,11 @@ void ofApp::dovi_metadata_mux() {
 		fbo_dovi.draw(0,0,ofGetWindowWidth(),2);		
 	} else {
 		ofSetColor(255,255,255,255); 
-		fbo8.draw(0,0,ofGetWindowWidth(),ofGetWindowHeight());		
+#ifdef USE_DOVI_FBO
+		fbo8_final.draw(0,0,ofGetWindowWidth(),ofGetWindowHeight());	
+#else
+		fbo8.draw(0,0,ofGetWindowWidth(),ofGetWindowHeight());	
+#endif	
 		fbo_dovi.draw(0,0,ofGetWindowWidth(),2);
 		}
 }
@@ -949,11 +977,17 @@ void ofApp::setDoViBackground(int redbg, int greenbg, int bluebg) {
 	greenbg *= ((pow(2,(8+(bits-8))) - 1) / (pow(2,8) - 1));
 	bluebg  *= ((pow(2,(8+(bits-8))) - 1) / (pow(2,8) - 1));
 	ofApp::setColor(redbg,greenbg,bluebg);
+
 	ofApp::shader_begin(0);
-
+#ifdef USE_DOVI_FBO
+	fbo8.begin();
+#endif
 	ofDrawRectangle(0,0,ofGetWindowWidth(),ofGetWindowHeight());
-
+#ifdef USE_DOVI_FBO		
+	fbo8.end();
+#endif
 	ofApp::shader_end(0);
+
 }
 
 /*
@@ -990,11 +1024,19 @@ void ofApp::fbo_allocate() {
 		} else {
 			//allocate 8bit fbo
 			settings.height = ofGetWindowHeight();
+
+#ifdef USE_DOVI_FBO
+			fbo8_final.allocate(settings);
+			fbo8_final.begin();
+			ofClear(0,0,0,0);		
+			fbo8_final.end();
+#endif
 			fbo8.allocate(settings);
 	//		fbo8.allocate(ofGetWindowWidth(),ofGetWindowHeight(), GL_RGBA);
 			fbo8.begin();
 			ofClear(0,0,0,0);
 			fbo8.end();
+
 		}
 	}
 }
