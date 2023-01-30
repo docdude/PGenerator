@@ -697,6 +697,8 @@ int ofApp::dv_map_mode=2;
 int ofApp::dv_minpq=62;
 int ofApp::dv_maxpq=3696;
 int ofApp::dv_diagonal=42;
+int ofApp::dv_color_space=1;
+
 /*
  ##########################################################
  #                   Update DoVi Metadata                 #
@@ -710,12 +712,15 @@ void ofApp::dovi_metadata_update() {
 	if (dv_map_mode != dv_metadata.dv_map_mode || 
 	    dv_minpq != dv_metadata.dv_minpq || 
 		dv_maxpq != dv_metadata.dv_maxpq ||
-		dv_diagonal != dv_metadata.dv_diagonal) dv_meta_update = 1; 
+		dv_diagonal != dv_metadata.dv_diagonal ||
+		dv_color_space != dv_metadata.dv_color_space) dv_meta_update = 1; 
 		
 	/* DV Profile 8.1 */	
 	if (ofxRPI4Window::dv_profile == 1) {
 
 		if (dv_meta_update) {	
+			/* Source signal color space, 0=YCbCr, 1=RGB, 2=IPT, 3=Reserved */
+			dv_metadata.dv_meta8_2[66] = dv_color_space & 0xff;
 			/* Source display minPQ, maxPQ(in 12-bit PQ encoding) and diagonal */
 			/* The value shall be in the range of 0 to 4095, inclusive. If source_min_PQ is not present, it shall be inferred to be 62 */
 			dv_metadata.dv_meta8_1[69] = (dv_minpq  >> 8) & 0xff;
@@ -754,6 +759,8 @@ void ofApp::dovi_metadata_update() {
 	if (ofxRPI4Window::dv_profile == 2) { 
 
 		if (dv_meta_update) {
+			/* Source signal color space, 0=YCbCr, 1=RGB, 2=IPT, 3=Reserved */
+			dv_metadata.dv_meta8_2[66] = dv_color_space & 0xff;
 			/* Source display minPQ, maxPQ(in 12-bit PQ encoding) and diagonal */
 			/* The value shall be in the range of 0 to 4095, inclusive. If source_min_PQ is not present, it shall be inferred to be 62 */
 			dv_metadata.dv_meta8_2[69] = (dv_minpq  >> 8) & 0xff;
@@ -792,6 +799,7 @@ void ofApp::dovi_metadata_update() {
 	dv_metadata.dv_minpq = dv_minpq;
 	dv_metadata.dv_maxpq = dv_maxpq;
 	dv_metadata.dv_diagonal = dv_diagonal;
+	dv_metadata.dv_color_space = dv_color_space;
 
 }
 

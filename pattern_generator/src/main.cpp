@@ -51,6 +51,7 @@ std::string dv_map_mode="2";
 std::string dv_minpq="62";
 std::string dv_maxpq="3696";
 std::string dv_diagonal="42";
+std::string dv_color_space="1";
 /* Include RPI p4 header file */
 #include "ofxRPI4Window.h"
 // End Patch RPI p4
@@ -121,6 +122,7 @@ int main(int argc, char **argv){
    if(el[0] == "dv_minpq")    	  dv_minpq=el[1];
    if(el[0] == "dv_maxpq")        dv_maxpq=el[1];
    if(el[0] == "dv_diagonal")     dv_diagonal=el[1];
+   if(el[0] == "dv_color_space")  dv_color_space=el[1];
   }
   file.close();
 
@@ -146,7 +148,7 @@ int main(int argc, char **argv){
   ofApp::dv_minpq=atoi(dv_minpq.c_str());
   ofApp::dv_maxpq=atoi(dv_maxpq.c_str());
   ofApp::dv_diagonal=atoi(dv_diagonal.c_str());
-
+  ofApp::dv_color_space=atoi(dv_color_space.c_str());
 
   /* RPI4 Run App */
   ofGLESWindowSettings settings;
