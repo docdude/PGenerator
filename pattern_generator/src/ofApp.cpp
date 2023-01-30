@@ -720,7 +720,7 @@ void ofApp::dovi_metadata_update() {
 
 		if (dv_meta_update) {	
 			/* Source signal color space, 0=YCbCr, 1=RGB, 2=IPT, 3=Reserved */
-			dv_metadata.dv_meta8_2[66] = dv_color_space & 0xff;
+			dv_metadata.dv_meta8_1[66] = dv_color_space & 0xff;
 			/* Source display minPQ, maxPQ(in 12-bit PQ encoding) and diagonal */
 			/* The value shall be in the range of 0 to 4095, inclusive. If source_min_PQ is not present, it shall be inferred to be 62 */
 			dv_metadata.dv_meta8_1[69] = (dv_minpq  >> 8) & 0xff;
